@@ -19,12 +19,14 @@ from django.conf.urls import url
 from django.contrib import admin
 
 urlpatterns = (
+    # Admin
+    url(r'admin/', admin.site.urls),
+
     # 计数器接口
     url(r'^^api/count(/)?$', views.counter),
 
     # 获取主页
     url(r'(/)?$', views.index),
 
-    # Admin
-    url(r'admin(/)?$', admin.site.urls),
+ 
 )

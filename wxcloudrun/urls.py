@@ -16,6 +16,7 @@ Including another URLconf
 
 from wxcloudrun import views
 from django.conf.urls import url
+from django.contrib import admin
 
 urlpatterns = (
     # 计数器接口
@@ -23,4 +24,7 @@ urlpatterns = (
 
     # 获取主页
     url(r'(/)?$', views.index),
+
+    # Admin
+    url(r'admin(/)?$', admin.site.urls),
 )

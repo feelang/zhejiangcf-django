@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 logger = logging.getLogger('log')
 
 @login_required
-def index(request, _):
+def index(request):
     """
     获取主页
 

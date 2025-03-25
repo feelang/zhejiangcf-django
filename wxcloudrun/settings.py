@@ -196,3 +196,4 @@ LOGS_DIR = '/data/logs/'
 # 登录相关配置
 LOGIN_URL = '/login/'  # 登录页面的 URL
 LOGIN_REDIRECT_URL = '/'  # 登录成功后的重定向 URL
+LOGOUT_REDIRECT_URL = '/'  # 登出后的重定向 URL

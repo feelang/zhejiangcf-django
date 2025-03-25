@@ -191,3 +191,7 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGS_DIR = '/data/logs/'
+
+# 登录相关配置
+LOGIN_URL = '/survey/login/'  # 登录页面的 URL
+LOGIN_REDIRECT_URL = '/survey/'  # 登录成功后的重定向 URL

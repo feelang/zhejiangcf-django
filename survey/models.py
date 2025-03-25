@@ -4,7 +4,7 @@ from django.core.validators import RegexValidator
 # Create your models here.
 class LsdSurvey(models.Model):
     # 用户唯一标识
-    _openId = models.CharField(max_length=100, unique=True)
+    _openId = models.CharField(max_length=100)
     # 姓名
     name = models.CharField(max_length=50)
     # 年龄

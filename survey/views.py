@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -12,9 +14,17 @@ def submit_survey(request):
     try:
         data = json.loads(request.body)
         
+        # 从请求头获取微信云托管注入的openid
+        openid = request.headers.get('X-WX-OPENID')
+        if not openid:
+            return JsonResponse({
+                'code': 401,
+                'message': '未授权访问'
+            }, status=401)
+        
         # 创建新的调查记录
         survey = LsdSurvey(
-            _openId=data.get('_openId'),
+            _openId=openid,
             name=data.get('name'),
             age=data.get('age'),
             phone=data.get('phone'),
@@ -50,12 +60,13 @@ def submit_survey(request):
 @require_http_methods(["GET"])
 def get_surveys(request):
     try:
-        _openId = request.GET.get('_openId')
+        # 从请求头获取微信云托管注入的openid
+        _openId = request.headers.get('X-WX-OPENID')
         if not _openId:
             return JsonResponse({
-                'code': 400,
-                'message': '缺少_openId参数'
-            }, status=400)
+                'code': 401,
+                'message': '未授权访问'
+            }, status=401)
             
         # 查询该用户的所有问卷
         surveys = LsdSurvey.objects.filter(_openId=_openId).values(
@@ -75,3 +86,20 @@ def get_surveys(request):
             'code': 500,
             'message': str(e)
         }, status=500)
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('survey:index')  # 重定向到主页或其他页面
+        else:
+            return render(request, 'survey/login.html', {
+                'error_message': '用户名或密码错误'
+            })
+    
+    return render(request, 'survey/login.html')

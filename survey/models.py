@@ -34,7 +34,7 @@ class LsdSurvey(models.Model):
 
     class Meta:
         db_table = 'lsd_survey'
-        verbose_name = '调查表'
+        verbose_name = '蓝丝带问卷调查表'
         verbose_name_plural = verbose_name
 
     def __str__(self):

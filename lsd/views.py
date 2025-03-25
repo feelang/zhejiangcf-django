@@ -92,10 +92,11 @@ def get_surveys(request):
 def survey_list(request):
     try:
         # 获取当前登录用户的组织
-        user_organization = request.user.profile.organization
+        # user_organization = request.user.profile.organization
         
         # 查询该组织的所有问卷
-        surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
+        # surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
+        surveys = LsdSurvey.objects.order_by('-created_at')
         
         return render(request, 'lsd/survey_list.html', {
             'surveys': surveys

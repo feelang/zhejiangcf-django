@@ -7,5 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('admin/', admin.site.urls),
+    path('lsd/', include('lsd.urls')),
     path('survey/', include('lungsurvey.urls')),
 ]

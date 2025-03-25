@@ -23,7 +23,7 @@
     <div class="container">
         <div class="login-container bg-white">
             <h2 class="login-title">用户登录</h2>
-            <form method="post" action="{% url 'survey:login' %}">
+            <form method="post">
                 {% csrf_token %}
                 <div class="mb-3">
                     <label for="username" class="form-label">用户名</label>
@@ -37,9 +37,9 @@
                     <input type="checkbox" class="form-check-input" id="remember" name="remember">
                     <label class="form-check-label" for="remember">记住我</label>
                 </div>
-                {% if error_message %}
+                {% if form.errors %}
                 <div class="alert alert-danger" role="alert">
-                    {{ error_message }}
+                    用户名或密码错误
                 </div>
                 {% endif %}
                 <button type="submit" class="btn btn-primary w-100">登录</button>

@@ -87,19 +87,21 @@ def get_surveys(request):
             'message': str(e)
         }, status=500)
 
-
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+@login_required
+@require_http_methods(["GET"])
+def survey_list(request):
+    try:
+        # 获取当前登录用户的组织
+        user_organization = request.user.profile.organization
         
-        if user is not None:
-            login(request, user)
-            return redirect('survey:index')  # 重定向到主页或其他页面
-        else:
-            return render(request, 'survey/login.html', {
-                'error_message': '用户名或密码错误'
-            })
-    
-    return render(request, 'survey/login.html')
+        # 查询该组织的所有问卷
+        surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
+        
+        return render(request, 'lsd/survey_list.html', {
+            'surveys': surveys
+        })
+    except Exception as e:
+        return JsonResponse({
+            'code': 500,
+            'message': str(e)
+        }, status=500)

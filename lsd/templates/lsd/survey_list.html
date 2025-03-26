@@ -2,39 +2,74 @@
 
 {% block content %}
 <div class="container mt-4">
-        <h2 class="mb-4">问卷列表</h2>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>姓名</th>
-                        <th>年龄</th>
-                        <th>电话</th>
-                        <th>组织</th>
-                        <th>职业</th>
-                        <th>项目</th>
-                        <th>组别</th>
-                        <th>提交时间</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for survey in surveys %}
-                    <tr>
-                        <td>{{ survey.name }}</td>
-                        <td>{{ survey.age }}</td>
-                        <td>{{ survey.phone }}</td>
-                        <td>{{ survey.organization }}</td>
-                        <td>{{ survey.occupation }}</td>
-                        <td>{{ survey.project }}</td>
-                        <td>{{ survey.groupSelection }}</td>
-                        <td>{{ survey.created_at|date:"Y-m-d H:i" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <h2 class="mb-4">问卷列表</h2>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>年龄</th>
+                    <th>电话</th>
+                    <th>组织</th>
+                    <th>职业</th>
+                    <th>项目</th>
+                    <th>组别</th>
+                    <th>提交时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for survey in surveys %}
+                <tr>
+                    <td>{{ survey.name }}</td>
+                    <td>{{ survey.age }}</td>
+                    <td>{{ survey.phone }}</td>
+                    <td>{{ survey.organization }}</td>
+                    <td>{{ survey.occupation }}</td>
+                    <td>{{ survey.project }}</td>
+                    <td>{{ survey.groupSelection }}</td>
+                    <td>{{ survey.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&laquo;</span>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
 {% endblock %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>

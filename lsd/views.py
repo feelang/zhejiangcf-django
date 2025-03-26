@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 import json
 from .models import LsdSurvey
 from django.core.serializers import serialize
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 logger = logging.getLogger('log')
 
@@ -91,6 +92,7 @@ def get_surveys(request):
             'message': str(e)
         }, status=500)
 
+
 @login_required
 @require_http_methods(["GET"])
 def survey_list(request):
@@ -100,10 +102,24 @@ def survey_list(request):
 
         # 查询该组织的所有问卷
         # surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
-        surveys = LsdSurvey.objects.order_by('-created_at')
+        survey_list = LsdSurvey.objects.order_by('-created_at')
+        
+        # 设置每页显示10条记录
+        paginator = Paginator(survey_list, 10)
+        
+        # 获取页码参数，默认为第1页
+        page = request.GET.get('page', 1)
+        try:
+            surveys = paginator.page(page)
+        except PageNotAnInteger:
+            surveys = paginator.page(1)
+        except EmptyPage:
+            surveys = paginator.page(paginator.num_pages)
 
         return render(request, 'lsd/survey_list.html', {
-            'surveys': surveys
+            'surveys': surveys,
+            'page_obj': surveys,
+            'is_paginated': True
         })
     except Exception as e:
         return JsonResponse({

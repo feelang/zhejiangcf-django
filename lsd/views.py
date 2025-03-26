@@ -16,16 +16,16 @@ logger = logging.getLogger('log')
 def submit_survey(request):
     try:
         data = json.loads(request.body)
-        
+
         # 从请求头获取微信云托管注入的openid
-        openid = request.headers.get('X-WX-OPENID')
+        openid = request.headers.get('X-WX-OPENID') or request.headers.get('X-WX-FROM-OPENID')
         logger.info(f'openid: {openid}')  # Add this line for debuggin
         if not openid:
             return JsonResponse({
                 'code': 401,
                 'message': '未授权访问'
             }, status=401)
-        
+
         # 创建新的调查记录
         survey = LsdSurvey(
             _openId=openid,
@@ -39,10 +39,10 @@ def submit_survey(request):
             sexualExperience=data.get('sexualExperience'),
             cervicalCancerScreening=data.get('cervicalCancerScreening')
         )
-        
+
         # 保存到数据库
         survey.save()
-        
+
         return JsonResponse({
             'code': 0,
             'message': '提交成功',
@@ -71,7 +71,7 @@ def get_surveys(request):
                 'code': 401,
                 'message': '未授权访问'
             }, status=401)
-            
+
         # 查询该用户的所有问卷
         surveys = LsdSurvey.objects.filter(_openId=_openId).values(
             'id', '_openId', 'name', 'age', 'phone', 'organization',
@@ -79,7 +79,7 @@ def get_surveys(request):
             'sexualExperience', 'cervicalCancerScreening',
             'created_at', 'updated_at'
         )
-        
+
         return JsonResponse({
             'code': 0,
             'message': '查询成功',
@@ -97,11 +97,11 @@ def survey_list(request):
     try:
         # 获取当前登录用户的组织
         # user_organization = request.user.profile.organization
-        
+
         # 查询该组织的所有问卷
         # surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
         surveys = LsdSurvey.objects.order_by('-created_at')
-        
+
         return render(request, 'lsd/survey_list.html', {
             'surveys': surveys
         })

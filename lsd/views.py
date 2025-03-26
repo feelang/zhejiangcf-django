@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,8 @@ import json
 from .models import LsdSurvey
 from django.core.serializers import serialize
 
+logger = logging.getLogger('log')
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def submit_survey(request):
@@ -16,6 +19,7 @@ def submit_survey(request):
         
         # 从请求头获取微信云托管注入的openid
         openid = request.headers.get('X-WX-OPENID')
+        logger.info(f'openid: {openid}')  # Add this line for debuggin
         if not openid:
             return JsonResponse({
                 'code': 401,

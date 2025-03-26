@@ -3,36 +3,6 @@
 {% block title %}浙江省基金会{% endblock %}
 
 {% block content %}
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Droid Sans", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Droid Sans Fallback", "Microsoft YaHei", sans-serif;
-    }
-    .card:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: box-shadow 0.3s ease-in-out;
-    }
-  </style>
-</head>
-
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">浙江省癌症基金会</a>
-      <div class="d-flex">
-        <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            {{ request.user.username }}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="#">用户信息</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'logout' %}">登出</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </nav>
-
   <div class="container mt-5">
     <div class="card text-center" style="cursor: pointer;" onclick="window.location.href='/lsd/'">
       <div class="card-body">

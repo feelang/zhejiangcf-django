@@ -5,17 +5,17 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 class LsdOrganization(models.Model):
-    name = models.CharField(max_length=100, verbose_name='名称')
-    code = models.CharField(max_length=50, unique=True, verbose_name='代码')
-    remark = models.TextField(blank=True, null=True, verbose_name='备注')
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name='父级机构')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    name = models.CharField(max_length=100, verbose_name='Name')
+    code = models.CharField(max_length=50, unique=True, verbose_name='Code')
+    remark = models.TextField(blank=True, null=True, verbose_name='Remark')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name='Parent')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Created Time')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Updated Time')
 
     class Meta:
         db_table = 'lsd_organization'
-        verbose_name = '组织机构'
-        verbose_name_plural = verbose_name
+        verbose_name = 'Lsd Organization'
+        verbose_name_plural = 'Lsd Organizations'
         ordering = ['name']
 
     def __str__(self):
@@ -28,11 +28,11 @@ class UserProfile(models.Model):
     
     class Meta:
         db_table = 'lsd_user_profile'
-        verbose_name = '用户资料'
+        verbose_name = 'User Profile'
         verbose_name_plural = verbose_name
     
     def __str__(self):
-        return f"{self.user.username}的资料"
+        return f"{self.user.username}'s Profile"
 
 # 当创建用户时自动创建对应的 profile
 @receiver(post_save, sender=User)
@@ -89,7 +89,7 @@ class LsdSurvey(models.Model):
 
     class Meta:
         db_table = 'lsd_survey'
-        verbose_name = '蓝丝带问卷调查表'
+        verbose_name = 'LSD Surveys'
         verbose_name_plural = verbose_name
 
     def __str__(self):

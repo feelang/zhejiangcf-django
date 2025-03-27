@@ -7,7 +7,7 @@ from .models import LsdOrganization, LsdSurvey, UserProfile
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
-    verbose_name_plural = '用户资料'
+    verbose_name_plural = 'User Profile'
 
 # 扩展 User admin
 class UserAdmin(BaseUserAdmin):

@@ -75,7 +75,7 @@ def get_surveys(request):
             }, status=401)
 
         # 查询该用户的所有问卷
-        surveys = LsdSurvey.objects.filter(_openId=_openId).values(
+        surveys = LsdSurvey.objects.filter(_openId=openId).values(
             'id', '_openId', 'name', 'age', 'phone', 'organization',
             'occupation', 'project', 'groupSelection',
             'sexualExperience', 'cervicalCancerScreening',

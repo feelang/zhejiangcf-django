@@ -17,6 +17,10 @@ class UserAdmin(BaseUserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 
+# 自定义LsdOrganization的管理界面
+class LsdOrganizationAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'remark']
+
 # 注册其他模型
-admin.site.register(LsdOrganization)
+admin.site.register(LsdOrganization, LsdOrganizationAdmin)
 admin.site.register(LsdSurvey)

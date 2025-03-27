@@ -16,7 +16,7 @@ class LsdOrganization(models.Model):
         db_table = 'lsd_organization'
         verbose_name = '组织机构'
         verbose_name_plural = verbose_name
-        ordering = ['code']
+        ordering = ['name']
 
     def __str__(self):
         return self.name

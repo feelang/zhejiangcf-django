@@ -30,11 +30,10 @@
       <div class="d-flex">
         <div class="dropdown">
           <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            {{ request.user.last_name }}{{ request.user.first_name }}
+            {{ request.user.username }}
           </button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="#">用户信息</a></li>
-            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#"> {{ request.user.first_name }} {{ request.user.last_name }} </a></li>
             <li><a class="dropdown-item" href="{% url 'logout' %}">登出</a></li>
           </ul>
         </div>

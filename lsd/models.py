@@ -42,7 +42,11 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    try:
+        if hasattr(instance, 'profile'):
+            instance.profile.save()
+    except UserProfile.DoesNotExist:
+        pass  # 如果 profile 不存在，忽略
 
 # Create your models here.
 class LsdSurvey(models.Model):

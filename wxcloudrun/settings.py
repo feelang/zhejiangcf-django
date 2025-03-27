@@ -72,9 +72,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get("MYSQL_DATABASE", 'django_demo'),
         'USER': os.environ.get("MYSQL_USERNAME", 'root'),
-        'HOST': os.environ.get("MYSQL_ADDRESS", 'sh-cynosdbmysql-grp-qohlqiya.sql.tencentcdb.com:22080').split(':')[0],
-        'PORT': os.environ.get("MYSQL_ADDRESS", 'sh-cynosdbmysql-grp-qohlqiya.sql.tencentcdb.com:22080').split(':')[1],
-        'PASSWORD': os.environ.get("MYSQL_PASSWORD", 'zhejiangcf1234@'),
+        'HOST': os.environ.get("MYSQL_ADDRESS").split(':')[0],
+        'PORT': os.environ.get("MYSQL_ADDRESS").split(':')[1],
+        'PASSWORD': os.environ.get("MYSQL_PASSWORD"),
         'OPTIONS': {'charset': 'utf8mb4'},
     }
 }

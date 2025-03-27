@@ -1,5 +1,8 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class LsdOrganization(models.Model):
     name = models.CharField(max_length=100, verbose_name='名称')
@@ -17,6 +20,29 @@ class LsdOrganization(models.Model):
 
     def __str__(self):
         return self.name
+
+# 用户资料模型，关联 User 和 LsdOrganization
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name='用户')
+    organization = models.ForeignKey(LsdOrganization, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='所属机构')
+    
+    class Meta:
+        db_table = 'lsd_user_profile'
+        verbose_name = '用户资料'
+        verbose_name_plural = verbose_name
+    
+    def __str__(self):
+        return f"{self.user.username}的资料"
+
+# 当创建用户时自动创建对应的 profile
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
 
 # Create your models here.
 class LsdSurvey(models.Model):

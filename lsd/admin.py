@@ -1,12 +1,22 @@
 from django.contrib import admin
-from .models import LsdSurvey, LsdOrganization
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from .models import LsdOrganization, LsdSurvey, UserProfile
 
-# Register your models here.
-class LsdOrganizationAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'parent', 'created_at', 'updated_at']
-    search_fields = ['name', 'code']
-    list_filter = ['created_at', 'updated_at']
-    ordering = ['code']
+# 定义 UserProfile 的内联管理
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = '用户资料'
 
-admin.site.register(LsdOrganization, LsdOrganizationAdmin)
+# 扩展 User admin
+class UserAdmin(BaseUserAdmin):
+    inlines = (UserProfileInline,)
+
+# 重新注册 User 模型
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+# 注册其他模型
+admin.site.register(LsdOrganization)
 admin.site.register(LsdSurvey)

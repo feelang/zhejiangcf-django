@@ -3,7 +3,6 @@ import logging
 
 from django.http import JsonResponse
 from django.shortcuts import render
-from wxcloudrun.models import Counters
 from django.contrib.auth.decorators import login_required
 
 

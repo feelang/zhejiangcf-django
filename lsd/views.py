@@ -95,6 +95,34 @@ def get_surveys(request):
 
 
 @login_required
+@require_http_methods(["POST"])
+def update_survey(request, survey_id):
+    try:
+        data = json.loads(request.body)
+        survey = LsdSurvey.objects.get(id=survey_id)
+        
+        # 更新问卷数据
+        survey.hpv_result = data.get('hpv_result')
+        survey.tct_result = data.get('tct_result')
+        survey.biopsy_result = data.get('biopsy_result')
+        survey.save()
+        
+        return JsonResponse({
+            'code': 0,
+            'message': '更新成功'
+        })
+    except LsdSurvey.DoesNotExist:
+        return JsonResponse({
+            'code': 404,
+            'message': '问卷不存在'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'code': 500,
+            'message': str(e)
+        }, status=500)
+
+@login_required
 @require_http_methods(["GET"])
 def survey_list(request):
     try:

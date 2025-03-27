@@ -31,6 +31,14 @@ class LsdSurvey(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     # 更新时间
     updated_at = models.DateTimeField(auto_now=True)
+    # HPV结果
+    hpv_result = models.CharField(max_length=100, null=True, blank=True)
+    # TCT结果
+    tct_result = models.CharField(max_length=100, null=True, blank=True)
+    # 活检结果
+    biopsy_result = models.CharField(max_length=100, null=True, blank=True)
+    # 备注
+    remark = models.CharField(max_length=500, null=True, blank=True)
 
     class Meta:
         db_table = 'lsd_survey'

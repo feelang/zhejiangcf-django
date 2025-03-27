@@ -10,11 +10,10 @@
                     <th>姓名</th>
                     <th>年龄</th>
                     <th>电话</th>
-                    <th>组织</th>
-                    <th>职业</th>
-                    <th>项目</th>
-                    <th>组别</th>
-                    <th>提交时间</th>
+                    <th>HPV结果</th>
+                    <th>TCT结果</th>
+                    <th>活检结果</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,12 +22,48 @@
                     <td>{{ survey.name }}</td>
                     <td>{{ survey.age }}</td>
                     <td>{{ survey.phone }}</td>
-                    <td>{{ survey.organization }}</td>
-                    <td>{{ survey.occupation }}</td>
-                    <td>{{ survey.project }}</td>
-                    <td>{{ survey.groupSelection }}</td>
-                    <td>{{ survey.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ survey.hpv_result|default:'-' }}</td>
+                    <td>{{ survey.tct_result|default:'-' }}</td>
+                    <td>{{ survey.biopsy_result|default:'-' }}</td>
+                    <td>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ survey.id }}">
+                            编辑
+                        </button>
+                    </td>
                 </tr>
+
+                <!-- 编辑对话框 -->
+                <div class="modal fade" id="editModal{{ survey.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ survey.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel{{ survey.id }}">编辑问卷</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editForm{{ survey.id }}">
+                                    <input type="hidden" name="survey_id" value="{{ survey.id }}">
+                                    <div class="mb-3">
+                                        <label for="hpv_result{{ survey.id }}" class="form-label">HPV结果</label>
+                                        <input type="text" class="form-control" id="hpv_result{{ survey.id }}" name="hpv_result" value="{{ survey.hpv_result|default:'' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tct_result{{ survey.id }}" class="form-label">TCT结果</label>
+                                        <input type="text" class="form-control" id="tct_result{{ survey.id }}" name="tct_result" value="{{ survey.tct_result|default:'' }}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="biopsy_result{{ survey.id }}" class="form-label">活检结果</label>
+                                        <input type="text" class="form-control" id="biopsy_result{{ survey.id }}" name="biopsy_result" value="{{ survey.biopsy_result|default:'' }}">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" onclick="updateSurvey({{ survey.id }})">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             </tbody>
         </table>
@@ -72,4 +107,54 @@
     </nav>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateSurvey(surveyId) {
+    const form = document.getElementById(`editForm${surveyId}`);
+    const formData = new FormData(form);
+    const data = {
+        hpv_result: formData.get('hpv_result'),
+        tct_result: formData.get('tct_result'),
+        biopsy_result: formData.get('biopsy_result')
+    };
+
+    fetch(`/lsd/api/surveys/${surveyId}/update/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            window.location.reload();
+        } else {
+            alert(data.message || '更新失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('更新失败');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

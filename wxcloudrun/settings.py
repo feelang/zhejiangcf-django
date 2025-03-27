@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import time
 
-CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
+CUR_PATH = os.path.dirname(os.path.realpath(__file__))
 LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
 if not os.path.exists(LOG_PATH): os.mkdir(LOG_PATH)  # 如果不存在这个logs文件夹，就自动创建一个
 
@@ -71,10 +71,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get("MYSQL_DATABASE", 'django_demo'),
-        'USER': os.environ.get("MYSQL_USERNAME"),
-        'HOST': os.environ.get("MYSQL_ADDRESS").split(':')[0],
-        'PORT': os.environ.get("MYSQL_ADDRESS").split(':')[1],
-        'PASSWORD': os.environ.get("MYSQL_PASSWORD"),
+        'USER': os.environ.get("MYSQL_USERNAME", 'root'),
+        'HOST': os.environ.get("MYSQL_ADDRESS", 'sh-cynosdbmysql-grp-qohlqiya.sql.tencentcdb.com:22080').split(':')[0],
+        'PORT': os.environ.get("MYSQL_ADDRESS", 'sh-cynosdbmysql-grp-qohlqiya.sql.tencentcdb.com:22080').split(':')[1],
+        'PASSWORD': os.environ.get("MYSQL_PASSWORD", 'zhejiangcf1234@'),
         'OPTIONS': {'charset': 'utf8mb4'},
     }
 }

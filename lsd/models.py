@@ -1,6 +1,23 @@
 from django.db import models
 from django.core.validators import RegexValidator
 
+class LsdOrganization(models.Model):
+    name = models.CharField(max_length=100, verbose_name='名称')
+    code = models.CharField(max_length=50, unique=True, verbose_name='代码')
+    remark = models.TextField(blank=True, null=True, verbose_name='备注')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', verbose_name='父级机构')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'lsd_organization'
+        verbose_name = '组织机构'
+        verbose_name_plural = verbose_name
+        ordering = ['code']
+
+    def __str__(self):
+        return self.name
+
 # Create your models here.
 class LsdSurvey(models.Model):
     # 用户唯一标识

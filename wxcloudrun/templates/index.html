@@ -4,12 +4,27 @@
 
 {% block content %}
   <div class="container mt-5">
-    <div class="card text-center" style="cursor: pointer;" onclick="window.location.href='/lsd/'">
-      <div class="card-body">
-        <h2 class="card-title">蓝丝带公益行动</h2>
-        <p class="card-text">宫颈癌筛查问卷</p>
+    <div class="row">
+      {% if 'lsd' in user.groups.all|stringformat:'s' %}
+      <div class="col-md-6 mb-4">
+        <div class="card text-center h-100" style="cursor: pointer;" onclick="window.location.href='/lsd/'">
+          <div class="card-body">
+            <h2 class="card-title">蓝丝带公益行动</h2>
+            <p class="card-text">宫颈癌筛查问卷</p>
+          </div>
+        </div>
       </div>
-    </div>
+      {% endif %}
+      {% if 'lung' in user.groups.all|stringformat:'s' %}
+      <div class="col-md-6 mb-4">
+        <div class="card text-center h-100" style="cursor: pointer;" onclick="window.location.href='/lung/'">
+          <div class="card-body">
+            <h2 class="card-title">浙江省肿瘤筛查基层行</h2>
+            <p class="card-text">肺癌风险评估问卷</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

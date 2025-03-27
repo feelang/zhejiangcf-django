@@ -102,9 +102,32 @@ def update_survey(request, survey_id):
         survey = LsdSurvey.objects.get(id=survey_id)
         
         # 更新问卷数据
-        survey.hpv_result = data.get('hpv_result')
-        survey.tct_result = data.get('tct_result')
-        survey.biopsy_result = data.get('biopsy_result')
+        if data.get('name') is not None:
+            survey.name = data.get('name')
+        if data.get('age') is not None:
+            survey.age = data.get('age')
+        if data.get('phone') is not None:
+            survey.phone = data.get('phone')
+        if data.get('organization') is not None:
+            survey.organization = data.get('organization')
+        if data.get('occupation') is not None:
+            survey.occupation = data.get('occupation')
+        if data.get('project') is not None:
+            survey.project = data.get('project')
+        if data.get('groupSelection') is not None:
+            survey.groupSelection = data.get('groupSelection')
+        if data.get('sexualExperience') is not None:
+            survey.sexualExperience = data.get('sexualExperience')
+        if data.get('cervicalCancerScreening') is not None:
+            survey.cervicalCancerScreening = data.get('cervicalCancerScreening')
+        if data.get('hpv_result') is not None:
+            survey.hpv_result = data.get('hpv_result')
+        if data.get('tct_result') is not None:
+            survey.tct_result = data.get('tct_result')
+        if data.get('biopsy_result') is not None:
+            survey.biopsy_result = data.get('biopsy_result')
+        if data.get('remark') is not None:
+            survey.remark = data.get('remark')
         survey.save()
         
         return JsonResponse({
@@ -126,12 +149,19 @@ def update_survey(request, survey_id):
 @require_http_methods(["GET"])
 def survey_list(request):
     try:
-        # 获取当前登录用户的组织
-        # user_organization = request.user.profile.organization
-
-        # 查询该组织的所有问卷
-        # surveys = LsdSurvey.objects.filter(organization=user_organization).order_by('-created_at')
+        # 获取搜索参数
+        search_query = request.GET.get('search', '')
+        
+        # 创建基础查询
         survey_list = LsdSurvey.objects.order_by('-created_at')
+        
+        # 如果有搜索关键词，添加搜索条件
+        if search_query:
+            from django.db.models import Q
+            survey_list = survey_list.filter(
+                Q(name__icontains=search_query) |
+                Q(phone__icontains=search_query)
+            )
         
         # 设置每页显示10条记录
         paginator = Paginator(survey_list, 10)

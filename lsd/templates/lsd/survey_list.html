@@ -3,6 +3,12 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">问卷列表</h2>
+    <form class="mb-4" method="get">
+        <div class="input-group">
+            <input type="text" class="form-control" name="search" placeholder="输入姓名或手机号搜索..." value="{{ request.GET.search }}">
+            <button class="btn btn-primary" type="submit">搜索</button>
+        </div>
+    </form>
     <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead>
@@ -22,9 +28,39 @@
                     <td>{{ survey.name }}</td>
                     <td>{{ survey.age }}</td>
                     <td>{{ survey.phone }}</td>
-                    <td>{{ survey.hpv_result|default:'-' }}</td>
-                    <td>{{ survey.tct_result|default:'-' }}</td>
-                    <td>{{ survey.biopsy_result|default:'-' }}</td>
+                    <td>
+                        {% if survey.hpv_result == -1 %}
+                            未检测
+                        {% elif survey.hpv_result == 0 %}
+                            <span class="text-success">阴性</span>
+                        {% elif survey.hpv_result == 1 %}
+                            <span class="text-danger">阳性</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if survey.tct_result == -1 %}
+                            未检测
+                        {% elif survey.tct_result == 0 %}
+                            <span class="text-success">阴性</span>
+                        {% elif survey.tct_result == 1 %}
+                            <span class="text-danger">阳性</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if survey.biopsy_result == -1 %}
+                            未检测
+                        {% elif survey.biopsy_result == 0 %}
+                            <span class="text-success">阴性</span>
+                        {% elif survey.biopsy_result == 1 %}
+                            <span class="text-danger">阳性</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ survey.id }}">
                             编辑
@@ -43,17 +79,99 @@
                             <div class="modal-body">
                                 <form id="editForm{{ survey.id }}">
                                     <input type="hidden" name="survey_id" value="{{ survey.id }}">
-                                    <div class="mb-3">
-                                        <label for="hpv_result{{ survey.id }}" class="form-label">HPV结果</label>
-                                        <input type="text" class="form-control" id="hpv_result{{ survey.id }}" name="hpv_result" value="{{ survey.hpv_result|default:'' }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="tct_result{{ survey.id }}" class="form-label">TCT结果</label>
-                                        <input type="text" class="form-control" id="tct_result{{ survey.id }}" name="tct_result" value="{{ survey.tct_result|default:'' }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="biopsy_result{{ survey.id }}" class="form-label">活检结果</label>
-                                        <input type="text" class="form-control" id="biopsy_result{{ survey.id }}" name="biopsy_result" value="{{ survey.biopsy_result|default:'' }}">
+                                    <ul class="nav nav-tabs" id="editTabs{{ survey.id }}" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="user-info-tab{{ survey.id }}" data-bs-toggle="tab" data-bs-target="#user-info{{ survey.id }}" type="button" role="tab" aria-controls="user-info{{ survey.id }}" aria-selected="true">用户信息</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="test-results-tab{{ survey.id }}" data-bs-toggle="tab" data-bs-target="#test-results{{ survey.id }}" type="button" role="tab" aria-controls="test-results{{ survey.id }}" aria-selected="false">检测结果</button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content pt-3" id="editTabsContent{{ survey.id }}">
+                                        <div class="tab-pane fade show active" id="user-info{{ survey.id }}" role="tabpanel" aria-labelledby="user-info-tab{{ survey.id }}">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="name{{ survey.id }}" class="form-label">姓名</label>
+                                                    <input type="text" class="form-control" id="name{{ survey.id }}" name="name" value="{{ survey.name }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="age{{ survey.id }}" class="form-label">年龄</label>
+                                                    <input type="number" class="form-control" id="age{{ survey.id }}" name="age" value="{{ survey.age }}">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="phone{{ survey.id }}" class="form-label">手机号码</label>
+                                                    <input type="tel" class="form-control" id="phone{{ survey.id }}" name="phone" value="{{ survey.phone }}" pattern="^1[3-9]\d{9}$">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="organization{{ survey.id }}" class="form-label">单位</label>
+                                                    <input type="text" class="form-control" id="organization{{ survey.id }}" name="organization" value="{{ survey.organization }}">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="occupation{{ survey.id }}" class="form-label">职业</label>
+                                                    <input type="text" class="form-control" id="occupation{{ survey.id }}" name="occupation" value="{{ survey.occupation }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="project{{ survey.id }}" class="form-label">项目</label>
+                                                    <input type="text" class="form-control" id="project{{ survey.id }}" name="project" value="{{ survey.project }}">
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="groupSelection{{ survey.id }}" class="form-label">分组选择</label>
+                                                    <input type="text" class="form-control" id="groupSelection{{ survey.id }}" name="groupSelection" value="{{ survey.groupSelection }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="sexualExperience{{ survey.id }}" class="form-label">性经历</label>
+                                                    <select class="form-select" id="sexualExperience{{ survey.id }}" name="sexualExperience">
+                                                        <option value="true" {% if survey.sexualExperience %}selected{% endif %}>是</option>
+                                                        <option value="false" {% if not survey.sexualExperience %}selected{% endif %}>否</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="cervicalCancerScreening{{ survey.id }}" class="form-label">宫颈癌筛查</label>
+                                                    <select class="form-select" id="cervicalCancerScreening{{ survey.id }}" name="cervicalCancerScreening">
+                                                        <option value="true" {% if survey.cervicalCancerScreening %}selected{% endif %}>是</option>
+                                                        <option value="false" {% if not survey.cervicalCancerScreening %}selected{% endif %}>否</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="test-results{{ survey.id }}" role="tabpanel" aria-labelledby="test-results-tab{{ survey.id }}">
+                                            <div class="mb-3">
+                                                <label for="hpv_result{{ survey.id }}" class="form-label">HPV结果</label>
+                                                <select class="form-select" id="hpv_result{{ survey.id }}" name="hpv_result">
+                                                    <option value="-1" {% if survey.hpv_result == -1 %}selected{% endif %}>未检测</option>
+                                                    <option value="0" {% if survey.hpv_result == 0 %}selected{% endif %}>阴性</option>
+                                                    <option value="1" {% if survey.hpv_result == 1 %}selected{% endif %}>阳性</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="tct_result{{ survey.id }}" class="form-label">TCT结果</label>
+                                                <select class="form-select" id="tct_result{{ survey.id }}" name="tct_result">
+                                                    <option value="-1" {% if survey.tct_result == -1 %}selected{% endif %}>未检测</option>
+                                                    <option value="0" {% if survey.tct_result == 0 %}selected{% endif %}>阴性</option>
+                                                    <option value="1" {% if survey.tct_result == 1 %}selected{% endif %}>阳性</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="biopsy_result{{ survey.id }}" class="form-label">活检结果</label>
+                                                <select class="form-select" id="biopsy_result{{ survey.id }}" name="biopsy_result">
+                                                    <option value="-1" {% if survey.biopsy_result == -1 %}selected{% endif %}>未检测</option>
+                                                    <option value="0" {% if survey.biopsy_result == 0 %}selected{% endif %}>阴性</option>
+                                                    <option value="1" {% if survey.biopsy_result == 1 %}selected{% endif %}>阳性</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="remark{{ survey.id }}" class="form-label">备注</label>
+                                                <textarea class="form-control" id="remark{{ survey.id }}" name="remark" rows="3">{{ survey.remark|default:'' }}</textarea>
+                                            </div>
+                                        </div>
                                     </div>
                                 </form>
                             </div>
@@ -115,9 +233,19 @@ function updateSurvey(surveyId) {
     const form = document.getElementById(`editForm${surveyId}`);
     const formData = new FormData(form);
     const data = {
+        name: formData.get('name'),
+        age: formData.get('age'),
+        phone: formData.get('phone'),
+        organization: formData.get('organization'),
+        occupation: formData.get('occupation'),
+        project: formData.get('project'),
+        groupSelection: formData.get('groupSelection'),
+        sexualExperience: formData.get('sexualExperience') === 'true',
+        cervicalCancerScreening: formData.get('cervicalCancerScreening') === 'true',
         hpv_result: formData.get('hpv_result'),
         tct_result: formData.get('tct_result'),
-        biopsy_result: formData.get('biopsy_result')
+        biopsy_result: formData.get('biopsy_result'),
+        remark: formData.get('remark')
     };
 
     fetch(`/lsd/api/surveys/${surveyId}/update/`, {

@@ -68,7 +68,7 @@ def get_surveys(request):
         # 从请求头获取微信云托管注入的openid
         openid = request.headers.get('X-WX-OPENID') or request.headers.get('X-WX-FROM-OPENID')
         logger.info(f'openid: {openid}')  # Add this line for debuggin
-        if not _openId:
+        if not openId:
             return JsonResponse({
                 'code': 401,
                 'message': '未授权访问'

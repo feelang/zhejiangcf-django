@@ -79,11 +79,29 @@ class LsdSurvey(models.Model):
     # 更新时间
     updated_at = models.DateTimeField(auto_now=True)
     # HPV结果
-    hpv_result = models.SmallIntegerField(null=True, blank=True)
+    HPV_RESULT_CHOICES = [
+        ('阴性', '阴性'),
+        ('16型+', '16型+'),
+        ('18/45型+', '18/45型+'),
+        ('16型+ 18/45型+', '16型+ 18/45型+'),
+        ('其余11型+', '其余11型+'),
+    ]
+    hpv_result = models.CharField(max_length=50, choices=HPV_RESULT_CHOICES, null=True, blank=True)
     # TCT结果
-    tct_result = models.SmallIntegerField(null=True, blank=True)
+    TCT_RESULT_CHOICES = [
+        ('未做', '未做'),
+        ('霉菌感染、滴虫感染', '霉菌感染、滴虫感染'),
+        ('NILM', 'NILM'),
+        ('ASC-US', 'ASC-US'),
+        ('ASC-H', 'ASC-H'),
+        ('LSIL', 'LSIL'),
+        ('HSIL', 'HSIL'),
+        ('AGC', 'AGC'),
+        ('SCC', 'SCC'),
+    ]
+    tct_result = models.CharField(max_length=50, choices=TCT_RESULT_CHOICES, null=True, blank=True)
     # 活检结果
-    biopsy_result = models.SmallIntegerField(null=True, blank=True)
+    biopsy_result = models.TextField(null=True, blank=True)
     # 备注
     remark = models.CharField(max_length=500, null=True, blank=True)
 

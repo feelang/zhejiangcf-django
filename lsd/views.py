@@ -9,6 +9,8 @@ import json
 from .models import LsdSurvey
 from django.core.serializers import serialize
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import xlrd
+from django.contrib import messages
 
 logger = logging.getLogger('log')
 
@@ -185,3 +187,93 @@ def survey_list(request):
             'code': 500,
             'message': str(e)
         }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def import_surveys(request):
+    try:
+        if 'excel_file' not in request.FILES:
+            messages.error(request, '请选择要导入的Excel文件')
+            return redirect('lsd:survey_list')
+
+        excel_file = request.FILES['excel_file']
+        if not excel_file.name.endswith(('.xls', '.xlsx')):
+            messages.error(request, '请上传Excel文件(.xls或.xlsx)')
+            return redirect('lsd:survey_list')
+
+        # 从用户 profile 获取机构信息
+        organization = request.user.profile.organization.code if request.user.profile and request.user.profile.organization else ''
+        if not organization:
+            messages.error(request, '用户未关联机构信息')
+            return redirect('lsd:survey_list')
+
+        # 读取Excel文件
+        workbook = xlrd.open_workbook(file_contents=excel_file.read())
+        sheet = workbook.sheet_by_index(0)
+        
+        # 验证必要的列是否存在
+        headers = [str(sheet.cell_value(0, col)).strip() for col in range(sheet.ncols)]
+        required_columns = ['序号', '姓名', '年龄', '职业', '群体选择', '电话', 
+                          '是否有过性生活', '一年内是否做过宫颈癌筛查', 
+                          '本次活动-HPV结果', '本次活动-TCT结果', '活检结果', '备注']
+        
+        missing_columns = [col for col in required_columns if col not in headers]
+        if missing_columns:
+            messages.error(request, f'Excel文件缺少必要的列: {", ".join(missing_columns)}')
+            return redirect('lsd:survey_list')
+
+        # 获取列索引
+        column_indices = {col: headers.index(col) for col in required_columns}
+        
+        # 导入数据
+        success_count = 0
+        error_count = 0
+        for row_idx in range(1, sheet.nrows):  # 从第二行开始（跳过表头）
+            try:
+                # 获取行数据
+                row_data = {col: str(sheet.cell_value(row_idx, idx)).strip() for col, idx in column_indices.items()}
+                
+                # 转换布尔值
+                sexual_experience = str(row_data['是否有过性生活']).lower() in ['是', '有', 'yes', 'true', '1']
+                cervical_screening = str(row_data['一年内是否做过宫颈癌筛查']).lower() in ['是', '有', 'yes', 'true', '1']
+
+                # 转换年龄为整数
+                try:
+                    age = int(float(row_data['年龄']))
+                except (ValueError, TypeError):
+                    age = 0
+
+                # 转换手机号码为字符串
+                phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
+                
+                # 创建或更新调查记录
+                survey, created = LsdSurvey.objects.update_or_create(
+                    phone=phone,  # 使用手机号作为唯一标识
+                    defaults={
+                        '_openId': f"import_{phone}",
+                        'name': row_data['姓名'],
+                        'age': age,
+                        'organization': organization,  # 使用当前用户的机构代码
+                        'occupation': row_data['职业'],
+                        'project': '蓝丝带公益行动',  # 默认项目名称
+                        'groupSelection': row_data['群体选择'],
+                        'sexualExperience': sexual_experience,
+                        'cervicalCancerScreening': cervical_screening,
+                        'hpv_result': row_data['本次活动-HPV结果'],
+                        'tct_result': row_data['本次活动-TCT结果'],
+                        'biopsy_result': row_data['活检结果'],
+                        'remark': row_data['备注']
+                    }
+                )
+                
+                success_count += 1
+            except Exception as e:
+                error_count += 1
+                logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx + 1}, 数据: {row_data}')
+
+        messages.success(request, f'成功导入 {success_count} 条数据，失败 {error_count} 条')
+        return redirect('lsd:survey_list')
+
+    except Exception as e:
+        messages.error(request, f'导入失败: {str(e)}')
+        return redirect('lsd:survey_list')

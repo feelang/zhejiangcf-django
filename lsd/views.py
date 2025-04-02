@@ -9,7 +9,7 @@ import json
 from .models import LsdSurvey
 from django.core.serializers import serialize
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import xlrd
+import openpyxl
 from django.contrib import messages
 
 logger = logging.getLogger('log')
@@ -208,11 +208,11 @@ def import_surveys(request):
             return redirect('lsd:survey_list')
 
         # 读取Excel文件
-        workbook = xlrd.open_workbook(file_contents=excel_file.read())
-        sheet = workbook.sheet_by_index(0)
+        workbook = openpyxl.load_workbook(excel_file)
+        sheet = workbook.active
         
         # 验证必要的列是否存在
-        headers = [str(sheet.cell_value(0, col)).strip() for col in range(sheet.ncols)]
+        headers = [str(cell.value).strip() for cell in sheet[1]]
         required_columns = ['序号', '姓名', '年龄', '职业', '群体选择', '电话', 
                           '是否有过性生活', '一年内是否做过宫颈癌筛查', 
                           '本次活动-HPV结果', '本次活动-TCT结果', '活检结果', '备注']
@@ -223,15 +223,37 @@ def import_surveys(request):
             return redirect('lsd:survey_list')
 
         # 获取列索引
-        column_indices = {col: headers.index(col) for col in required_columns}
+        column_indices = {col: headers.index(col) + 1 for col in required_columns}
         
         # 导入数据
         success_count = 0
         error_count = 0
-        for row_idx in range(1, sheet.nrows):  # 从第二行开始（跳过表头）
+        skipped_count = 0
+        duplicate_count = 0
+        duplicate_records = []
+        
+        # 用于跟踪已处理的姓名和手机号
+        processed_names = set()
+        processed_phones = set()
+        
+        for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):  # 从第二行开始（跳过表头）
             try:
                 # 获取行数据
-                row_data = {col: str(sheet.cell_value(row_idx, idx)).strip() for col, idx in column_indices.items()}
+                row_data = {col: str(row[idx-1].value).strip() if row[idx-1].value is not None else '' for col, idx in column_indices.items()}
+                
+                # 检查姓名和电话是否为空
+                if not row_data['姓名'] or not row_data['电话']:
+                    skipped_count += 1
+                    logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
+                    continue
+                
+                # 检查姓名和电话是否重复
+                phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
+                if row_data['姓名'] in processed_names or phone in processed_phones:
+                    duplicate_count += 1
+                    duplicate_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
+                    logger.info(f'跳过重复数据: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
+                    continue
                 
                 # 转换布尔值
                 sexual_experience = str(row_data['是否有过性生活']).lower() in ['是', '有', 'yes', 'true', '1']
@@ -242,9 +264,6 @@ def import_surveys(request):
                     age = int(float(row_data['年龄']))
                 except (ValueError, TypeError):
                     age = 0
-
-                # 转换手机号码为字符串
-                phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
                 
                 # 创建或更新调查记录
                 survey, created = LsdSurvey.objects.update_or_create(
@@ -266,12 +285,25 @@ def import_surveys(request):
                     }
                 )
                 
+                # 添加到已处理集合
+                processed_names.add(row_data['姓名'])
+                processed_phones.add(phone)
+                
                 success_count += 1
             except Exception as e:
                 error_count += 1
-                logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx + 1}, 数据: {row_data}')
+                logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx}, 数据: {row_data}')
 
-        messages.success(request, f'成功导入 {success_count} 条数据，失败 {error_count} 条')
+        # 构建消息
+        message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
+        if duplicate_count > 0:
+            message += f'，跳过 {duplicate_count} 条重复数据'
+            if len(duplicate_records) <= 5:  # 如果重复记录不多，直接显示
+                message += f'：{", ".join(duplicate_records)}'
+            else:  # 如果重复记录较多，只显示前5条
+                message += f'：{", ".join(duplicate_records[:5])}等'
+        
+        messages.success(request, message)
         return redirect('lsd:survey_list')
 
     except Exception as e:

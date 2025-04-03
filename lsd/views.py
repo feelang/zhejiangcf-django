@@ -11,6 +11,8 @@ from django.core.serializers import serialize
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import openpyxl
 from django.contrib import messages
+from django.db.models import Q
+from .models import UserProfile
 
 logger = logging.getLogger('log')
 
@@ -148,45 +150,52 @@ def update_survey(request, survey_id):
         }, status=500)
 
 @login_required
-@require_http_methods(["GET"])
 def survey_list(request):
+    # 获取用户所属机构
     try:
-        # 获取搜索参数
-        search_query = request.GET.get('search', '')
-        
-        # 创建基础查询
-        survey_list = LsdSurvey.objects.order_by('-created_at')
-        
-        # 如果有搜索关键词，添加搜索条件
-        if search_query:
-            from django.db.models import Q
-            survey_list = survey_list.filter(
-                Q(name__icontains=search_query) |
-                Q(phone__icontains=search_query)
-            )
-        
-        # 设置每页显示10条记录
-        paginator = Paginator(survey_list, 10)
-        
-        # 获取页码参数，默认为第1页
-        page = request.GET.get('page', 1)
-        try:
-            surveys = paginator.page(page)
-        except PageNotAnInteger:
-            surveys = paginator.page(1)
-        except EmptyPage:
-            surveys = paginator.page(paginator.num_pages)
+        user_profile = request.user.profile
+        organization_code = user_profile.organization.code if user_profile and user_profile.organization else None
+    except UserProfile.DoesNotExist:
+        organization_code = None
+        messages.warning(request, '用户未关联机构信息，无法查看问卷列表')
+        return redirect('lsd:survey_list')
 
-        return render(request, 'lsd/survey_list.html', {
-            'surveys': surveys,
-            'page_obj': surveys,
-            'is_paginated': True
-        })
-    except Exception as e:
-        return JsonResponse({
-            'code': 500,
-            'message': str(e)
-        }, status=500)
+    # 获取搜索参数
+    search_query = request.GET.get('search', '')
+    
+    # 构建查询
+    surveys = LsdSurvey.objects.all()
+    
+    # 根据机构过滤
+    if organization_code:
+        surveys = surveys.filter(organization=organization_code)
+    
+    # 如果有搜索查询，添加搜索条件
+    if search_query:
+        surveys = surveys.filter(
+            Q(name__icontains=search_query) |
+            Q(phone__icontains=search_query)
+        )
+    
+    # 按创建时间倒序排序
+    surveys = surveys.order_by('-created_at')
+    
+    # 分页
+    page = request.GET.get('page', 1)
+    paginator = Paginator(surveys, 10)  # 每页显示10条记录
+    
+    try:
+        surveys = paginator.page(page)
+    except PageNotAnInteger:
+        surveys = paginator.page(1)
+    except EmptyPage:
+        surveys = paginator.page(paginator.num_pages)
+    
+    return render(request, 'lsd/survey_list.html', {
+        'surveys': surveys,
+        'search_query': search_query,
+        'organization_code': organization_code
+    })
 
 @login_required
 @require_http_methods(["POST"])

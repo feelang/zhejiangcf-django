@@ -13,6 +13,7 @@ import openpyxl
 from django.contrib import messages
 from django.db.models import Q
 from .models import UserProfile
+import re
 
 logger = logging.getLogger('log')
 
@@ -257,12 +258,8 @@ def import_surveys(request):
         success_count = 0
         error_count = 0
         skipped_count = 0
-        duplicate_count = 0
-        duplicate_records = []
-        
-        # 用于跟踪已处理的姓名和手机号
-        processed_names = set()
-        processed_phones = set()
+        invalid_phone_count = 0
+        invalid_phone_records = []
         
         for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):  # 从第二行开始（跳过表头）
             try:
@@ -275,12 +272,12 @@ def import_surveys(request):
                     logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
                     continue
                 
-                # 检查姓名和电话是否重复
+                # 处理并验证手机号
                 phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
-                if row_data['姓名'] in processed_names or phone in processed_phones:
-                    duplicate_count += 1
-                    duplicate_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
-                    logger.info(f'跳过重复数据: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
+                if not re.match(r'^1[3-9]\d{9}$', phone):  # 验证中国大陆手机号格式
+                    invalid_phone_count += 1
+                    invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
+                    logger.info(f'跳过无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
                     continue
                 
                 # 转换布尔值
@@ -295,14 +292,14 @@ def import_surveys(request):
                 
                 # 创建或更新调查记录
                 survey, created = LsdSurvey.objects.update_or_create(
-                    phone=phone,  # 使用手机号作为唯一标识
-                    name=row_data['姓名'],  # 添加姓名作为唯一标识的一部分
+                    phone=phone,
+                    name=row_data['姓名'],
                     defaults={
                         '_openId': f"import_{phone}",
                         'age': age,
-                        'organization': organization,  # 使用当前用户的机构代码
+                        'organization': organization,
                         'occupation': row_data['职业'],
-                        'project': '蓝丝带公益行动',  # 默认项目名称
+                        'project': '蓝丝带公益行动',
                         'groupSelection': row_data['群体选择'],
                         'sexualExperience': sexual_experience,
                         'cervicalCancerScreening': cervical_screening,
@@ -313,10 +310,6 @@ def import_surveys(request):
                     }
                 )
                 
-                # 添加到已处理集合
-                processed_names.add(row_data['姓名'])
-                processed_phones.add(phone)
-                
                 success_count += 1
             except Exception as e:
                 error_count += 1
@@ -324,12 +317,12 @@ def import_surveys(request):
 
         # 构建消息
         message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
-        if duplicate_count > 0:
-            message += f'，跳过 {duplicate_count} 条重复数据'
-            if len(duplicate_records) <= 5:  # 如果重复记录不多，直接显示
-                message += f'：{", ".join(duplicate_records)}'
-            else:  # 如果重复记录较多，只显示前5条
-                message += f'：{", ".join(duplicate_records[:5])}等'
+        if invalid_phone_count > 0:
+            message += f'，跳过 {invalid_phone_count} 条无效手机号'
+            if len(invalid_phone_records) <= 5:  # 如果无效手机号记录不多，直接显示
+                message += f'：{", ".join(invalid_phone_records)}'
+            else:  # 如果无效手机号记录较多，只显示前5条
+                message += f'：{", ".join(invalid_phone_records[:5])}等'
         
         messages.success(request, message)
         return redirect('lsd:survey_list')

@@ -1,6 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<!-- 错误对话框 -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">提示</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    用户未关联机构信息，请联系管理员进行关联
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -232,6 +252,14 @@
 
 {% block extra_js %}
 <script>
+// 如果show_error_modal为true，显示错误对话框
+{% if show_error_modal %}
+document.addEventListener('DOMContentLoaded', function() {
+    var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+    errorModal.show();
+});
+{% endif %}
+
 function updateSurvey(surveyId) {
     const form = document.getElementById(`editForm${surveyId}`);
     const formData = new FormData(form);

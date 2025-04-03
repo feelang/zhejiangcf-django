@@ -155,10 +155,22 @@ def survey_list(request):
     try:
         user_profile = request.user.profile
         organization_code = user_profile.organization.code if user_profile and user_profile.organization else None
+        logger.info(f'organization_code: {organization_code}')
     except UserProfile.DoesNotExist:
         organization_code = None
-        messages.warning(request, '用户未关联机构信息，无法查看问卷列表')
-        return redirect('lsd:survey_list')
+
+    # 如果是staff用户，允许查看所有问卷
+    if request.user.is_staff:
+        organization_code = None
+        logger.info('User is staff, showing all surveys')
+    elif organization_code is None:
+        messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
+        return render(request, 'lsd/survey_list.html', {
+            'surveys': [],
+            'search_query': '',
+            'organization_code': None,
+            'show_error_modal': True
+        })
 
     # 获取搜索参数
     search_query = request.GET.get('search', '')
@@ -194,7 +206,9 @@ def survey_list(request):
     return render(request, 'lsd/survey_list.html', {
         'surveys': surveys,
         'search_query': search_query,
-        'organization_code': organization_code
+        'organization_code': organization_code,
+        'show_error_modal': False,
+        'is_staff': request.user.is_staff
     })
 
 @login_required

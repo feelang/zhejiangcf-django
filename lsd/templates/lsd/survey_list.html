@@ -28,7 +28,12 @@
             <li class="breadcrumb-item active" aria-current="page">蓝丝带问卷</li>
         </ol>
     </nav>
-    <h2 class="mb-4">问卷列表</h2>
+    <h2 class="mb-4">
+        问卷列表
+        {% if organization %}
+        <small class="text-muted ms-2"> {{ organization.name }}</small>
+        {% endif %}
+    </h2>
     
     {% if messages %}
     <div class="messages">

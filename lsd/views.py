@@ -154,13 +154,16 @@ def survey_list(request):
     # 获取用户所属机构
     try:
         user_profile = request.user.profile
-        organization_code = user_profile.organization.code if user_profile and user_profile.organization else None
+        organization = user_profile.organization if user_profile and user_profile.organization else None
+        organization_code = organization.code if organization else None
         logger.info(f'organization_code: {organization_code}')
     except UserProfile.DoesNotExist:
+        organization = None
         organization_code = None
 
     # 如果是staff用户，允许查看所有问卷
     if request.user.is_staff:
+        organization = None
         organization_code = None
         logger.info('User is staff, showing all surveys')
     elif organization_code is None:
@@ -168,6 +171,7 @@ def survey_list(request):
         return render(request, 'lsd/survey_list.html', {
             'surveys': [],
             'search_query': '',
+            'organization': None,
             'organization_code': None,
             'show_error_modal': True
         })
@@ -206,6 +210,7 @@ def survey_list(request):
     return render(request, 'lsd/survey_list.html', {
         'surveys': surveys,
         'search_query': search_query,
+        'organization': organization,
         'organization_code': organization_code,
         'show_error_modal': False,
         'is_staff': request.user.is_staff

@@ -296,9 +296,9 @@ def import_surveys(request):
                 # 创建或更新调查记录
                 survey, created = LsdSurvey.objects.update_or_create(
                     phone=phone,  # 使用手机号作为唯一标识
+                    name=row_data['姓名'],  # 添加姓名作为唯一标识的一部分
                     defaults={
                         '_openId': f"import_{phone}",
-                        'name': row_data['姓名'],
                         'age': age,
                         'organization': organization,  # 使用当前用户的机构代码
                         'occupation': row_data['职业'],

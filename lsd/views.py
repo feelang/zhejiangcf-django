@@ -194,27 +194,29 @@ def survey_list(request):
             Q(phone__icontains=search_query)
         )
     
-    # 按创建时间倒序排序
-    surveys = surveys.order_by('-created_at')
+    # 按更新时间倒序排序
+    surveys = surveys.order_by('-updated_at')
     
     # 分页
     page = request.GET.get('page', 1)
     paginator = Paginator(surveys, 10)  # 每页显示10条记录
     
     try:
-        surveys = paginator.page(page)
+        page_obj = paginator.page(page)
     except PageNotAnInteger:
-        surveys = paginator.page(1)
+        page_obj = paginator.page(1)
     except EmptyPage:
-        surveys = paginator.page(paginator.num_pages)
+        page_obj = paginator.page(paginator.num_pages)
     
     return render(request, 'lsd/survey_list.html', {
-        'surveys': surveys,
+        'surveys': page_obj,
         'search_query': search_query,
         'organization': organization,
         'organization_code': organization_code,
         'show_error_modal': False,
-        'is_staff': request.user.is_staff
+        'is_staff': request.user.is_staff,
+        'is_paginated': paginator.num_pages > 1,
+        'page_obj': page_obj
     })
 
 @login_required

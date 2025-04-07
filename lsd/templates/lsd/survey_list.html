@@ -72,6 +72,7 @@
                     <th>HPV结果</th>
                     <th>TCT结果</th>
                     <th>活检结果</th>
+                    <th>更新日期</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -90,6 +91,7 @@
                     <td>{{ survey.hpv_result|default:'-' }}</td>
                     <td>{{ survey.tct_result|default:'-' }}</td>
                     <td>{{ survey.biopsy_result|default:'-' }}</td>
+                    <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
                     <td>
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ survey.id }}">
                             编辑

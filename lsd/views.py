@@ -274,11 +274,12 @@ def import_surveys(request):
                 
                 # 处理并验证手机号
                 phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
-                if not re.match(r'^1[3-9]\d{9}$', phone):  # 验证中国大陆手机号格式
+                is_valid_phone = bool(re.match(r'^1[3-9]\d{9}$', phone))  # 验证中国大陆手机号格式
+                
+                if not is_valid_phone:
                     invalid_phone_count += 1
                     invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
-                    logger.info(f'跳过无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
-                    continue
+                    logger.info(f'无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
                 
                 # 转换布尔值
                 sexual_experience = str(row_data['是否有过性生活']).lower() in ['是', '有', 'yes', 'true', '1']
@@ -318,7 +319,7 @@ def import_surveys(request):
         # 构建消息
         message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
         if invalid_phone_count > 0:
-            message += f'，跳过 {invalid_phone_count} 条无效手机号'
+            message += f'，其中 {invalid_phone_count} 条手机号格式不正确'
             if len(invalid_phone_records) <= 5:  # 如果无效手机号记录不多，直接显示
                 message += f'：{", ".join(invalid_phone_records)}'
             else:  # 如果无效手机号记录较多，只显示前5条
@@ -330,3 +331,47 @@ def import_surveys(request):
     except Exception as e:
         messages.error(request, f'导入失败: {str(e)}')
         return redirect('lsd:survey_list')
+
+@login_required
+@require_http_methods(["POST"])
+def delete_survey(request, survey_id):
+    try:
+        survey = LsdSurvey.objects.get(id=survey_id)
+        
+        # 检查用户权限
+        if not request.user.is_staff:
+            # 获取用户所属机构
+            try:
+                user_profile = request.user.profile
+                organization = user_profile.organization if user_profile and user_profile.organization else None
+                organization_code = organization.code if organization else None
+                
+                # 如果用户不是staff且问卷不属于用户所在机构，则拒绝删除
+                if organization_code != survey.organization:
+                    return JsonResponse({
+                        'code': 403,
+                        'message': '您没有权限删除此问卷'
+                    }, status=403)
+            except UserProfile.DoesNotExist:
+                return JsonResponse({
+                    'code': 403,
+                    'message': '您没有权限删除此问卷'
+                }, status=403)
+        
+        # 删除问卷
+        survey.delete()
+        
+        return JsonResponse({
+            'code': 0,
+            'message': '删除成功'
+        })
+    except LsdSurvey.DoesNotExist:
+        return JsonResponse({
+            'code': 404,
+            'message': '问卷不存在'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'code': 500,
+            'message': str(e)
+        }, status=500)

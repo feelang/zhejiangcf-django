@@ -32,9 +32,10 @@
     <h2 class="mb-4">
         问卷列表
         {% if organization %}
-        <small class="text-muted ms-2"> {{ organization.name }}</small>
+        <small class="text-muted ms-2">{{ organization.name }}</small>
         {% endif %}
     </h2>
+    <p class="text-muted mb-4">共 {{ page_obj.paginator.count }} 条记录</p>
     
     {% if messages %}
     <div class="messages">

@@ -191,7 +191,9 @@ def survey_list(request):
     if search_query:
         surveys = surveys.filter(
             Q(name__icontains=search_query) |
-            Q(phone__icontains=search_query)
+            Q(phone__icontains=search_query) |
+            Q(hpv_result__icontains=search_query) |
+            Q(tct_result__icontains=search_query)
         )
     
     # 按更新时间倒序排序
@@ -199,7 +201,7 @@ def survey_list(request):
     
     # 分页
     page = request.GET.get('page', 1)
-    paginator = Paginator(surveys, 10)  # 每页显示10条记录
+    paginator = Paginator(surveys, 10)  
     
     try:
         page_obj = paginator.page(page)

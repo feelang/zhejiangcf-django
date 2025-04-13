@@ -50,17 +50,149 @@
     <div class="mb-4">
         <form method="get" class="mb-3">
             <div class="input-group">
-                <input type="text" class="form-control" name="search" placeholder="输入姓名或手机号搜索..." value="{{ request.GET.search }}">
+                <input type="text" class="form-control" name="search" placeholder="输入姓名、手机号、HPV结果或TCT结果搜索..." value="{{ request.GET.search }}">
                 <button class="btn btn-primary" type="submit">搜索</button>
             </div>
         </form>
-        <form method="post" action="{% url 'lsd:import_surveys' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="input-group">
-                <input type="file" class="form-control" name="excel_file" accept=".xls,.xlsx" required>
-                <button class="btn btn-success" type="submit">导入Excel</button>
+        <div class="d-flex justify-content-between mb-3">
+            <form method="post" action="{% url 'lsd:import_surveys' %}" enctype="multipart/form-data" class="me-2">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="file" class="form-control" name="excel_file" accept=".xls,.xlsx" required>
+                    <button class="btn btn-success" type="submit">导入Excel</button>
+                </div>
+            </form>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+                新增数据
+            </button>
+        </div>
+    </div>
+
+    <!-- 新增数据对话框 -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalLabel">新增问卷</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm">
+                        <ul class="nav nav-tabs" id="addTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="user-info-tab" data-bs-toggle="tab" data-bs-target="#user-info" type="button" role="tab" aria-controls="user-info" aria-selected="true">用户信息</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="test-results-tab" data-bs-toggle="tab" data-bs-target="#test-results" type="button" role="tab" aria-controls="test-results" aria-selected="false">检测结果</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content pt-3" id="addTabsContent">
+                            <div class="tab-pane fade show active" id="user-info" role="tabpanel" aria-labelledby="user-info-tab">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="name" class="form-label">姓名</label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="age" class="form-label">年龄</label>
+                                        <input type="number" class="form-control" id="age" name="age" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="phone" class="form-label">手机号码</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" pattern="^1[3-9]\d{9}$" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="organization" class="form-label">单位</label>
+                                        <input type="text" class="form-control" id="organization" name="organization" value="{{ organization.name }}" readonly>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="occupation" class="form-label">职业</label>
+                                        <input type="text" class="form-control" id="occupation" name="occupation">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="project" class="form-label">项目</label>
+                                        <input type="text" class="form-control" id="project" name="project">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="groupSelection" class="form-label">分组选择</label>
+                                        <select class="form-select" id="groupSelection" name="groupSelection">
+                                            <option value="低收入人群">低收入人群</option>
+                                            <option value="失独家庭">失独家庭</option>
+                                            <option value="残疾人群">残疾人群</option>
+                                            <option value="困难家庭（低保、低编）">困难家庭（低保、低编）</option>
+                                            <option value="援助证">援助证</option>
+                                            <option value="都不是">都不是</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="sexualExperience" class="form-label">性经历</label>
+                                        <select class="form-select" id="sexualExperience" name="sexualExperience">
+                                            <option value="true">是</option>
+                                            <option value="false">否</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cervicalCancerScreening" class="form-label">宫颈癌筛查</label>
+                                        <select class="form-select" id="cervicalCancerScreening" name="cervicalCancerScreening">
+                                            <option value="true">是</option>
+                                            <option value="false">否</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="test-results" role="tabpanel" aria-labelledby="test-results-tab">
+                                <div class="mb-3">
+                                    <label for="hpv_result" class="form-label">HPV结果</label>
+                                    <select class="form-select" id="hpv_result" name="hpv_result">
+                                        <option value="">请选择</option>
+                                        <option value="阴性">阴性</option>
+                                        <option value="16型+">16型+</option>
+                                        <option value="18/45型+">18/45型+</option>
+                                        <option value="16型+ 18/45型+">16型+ 18/45型+</option>
+                                        <option value="其余11型+">其余11型+</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tct_result" class="form-label">TCT结果</label>
+                                    <select class="form-select" id="tct_result" name="tct_result">
+                                        <option value="">请选择</option>
+                                        <option value="未做">未做</option>
+                                        <option value="霉菌感染、滴虫感染">霉菌感染、滴虫感染</option>
+                                        <option value="NILM">NILM</option>
+                                        <option value="ASC-US">ASC-US</option>
+                                        <option value="ASC-H">ASC-H</option>
+                                        <option value="LSIL">LSIL</option>
+                                        <option value="HSIL">HSIL</option>
+                                        <option value="AGC">AGC</option>
+                                        <option value="SCC">SCC</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="biopsy_result" class="form-label">活检结果</label>
+                                    <textarea class="form-control" id="biopsy_result" name="biopsy_result" rows="3"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="remark" class="form-label">备注</label>
+                                    <textarea class="form-control" id="remark" name="remark" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addSurvey()">保存</button>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -74,6 +206,7 @@
                     <th>TCT结果</th>
                     <th>活检结果</th>
                     <th>更新日期</th>
+                    <th>状态</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -81,7 +214,13 @@
                 {% for survey in surveys %}
                 <tr>
                     <td>{{ survey.name }}</td>
-                    <td>{{ survey.age }}</td>
+                    <td>
+                        {% if survey.age and survey.age >= 25 %}
+                            {{ survey.age }}
+                        {% else %}
+                            <span class="text-danger">{{ survey.age|default:'未填' }}</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if survey.phone|regex_match:"^1[3-9]\\d{9}$" %}
                             {{ survey.phone }}
@@ -93,6 +232,13 @@
                     <td>{{ survey.tct_result|default:'-' }}</td>
                     <td>{{ survey.biopsy_result|default:'-' }}</td>
                     <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
+                    <td>
+                        {% if survey.name and survey.age and survey.phone and survey.hpv_result and survey.tct_result %}
+                            <span class="badge bg-success">完整</span>
+                        {% else %}
+                            <span class="badge bg-danger">不完整</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ survey.id }}">
                             编辑
@@ -382,6 +528,47 @@ function deleteSurvey(surveyId) {
             alert('删除失败');
         });
     }
+}
+
+function addSurvey() {
+    const form = document.getElementById('addForm');
+    const formData = new FormData(form);
+    const data = {
+        name: formData.get('name'),
+        age: formData.get('age'),
+        phone: formData.get('phone'),
+        organization: formData.get('organization'),
+        occupation: formData.get('occupation'),
+        project: formData.get('project'),
+        groupSelection: formData.get('groupSelection'),
+        sexualExperience: formData.get('sexualExperience') === 'true',
+        cervicalCancerScreening: formData.get('cervicalCancerScreening') === 'true',
+        hpv_result: formData.get('hpv_result'),
+        tct_result: formData.get('tct_result'),
+        biopsy_result: formData.get('biopsy_result'),
+        remark: formData.get('remark')
+    };
+
+    fetch('/lsd/api/surveys/create/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            window.location.reload();
+        } else {
+            alert(data.message || '添加失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('添加失败');
+    });
 }
 </script>
 {% endblock %}

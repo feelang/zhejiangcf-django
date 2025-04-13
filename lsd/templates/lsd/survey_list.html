@@ -176,7 +176,14 @@
                                             <div class="row">
                                                 <div class="col-md-6 mb-3">
                                                     <label for="groupSelection{{ survey.id }}" class="form-label">分组选择</label>
-                                                    <input type="text" class="form-control" id="groupSelection{{ survey.id }}" name="groupSelection" value="{{ survey.groupSelection }}">
+                                                    <select class="form-select" id="groupSelection{{ survey.id }}" name="groupSelection">
+                                                        <option value="低收入人群" {% if survey.groupSelection == '低收入人群' %}selected{% endif %}>低收入人群</option>
+                                                        <option value="失独家庭" {% if survey.groupSelection == '失独家庭' %}selected{% endif %}>失独家庭</option>
+                                                        <option value="残疾人群" {% if survey.groupSelection == '残疾人群' %}selected{% endif %}>残疾人群</option>
+                                                        <option value="困难家庭（低保、低编）" {% if survey.groupSelection == '困难家庭（低保、低编）' %}selected{% endif %}>困难家庭（低保、低编）</option>
+                                                        <option value="援助证" {% if survey.groupSelection == '援助证' %}selected{% endif %}>援助证</option>
+                                                        <option value="都不是" {% if survey.groupSelection == '都不是' %}selected{% endif %}>都不是</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="sexualExperience{{ survey.id }}" class="form-label">性经历</label>

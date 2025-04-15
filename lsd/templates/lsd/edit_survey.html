@@ -64,13 +64,17 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="groupSelection" class="form-label">分组选择</label>
+                <label for="groupSelection" class="form-label">群体选择</label>
             </div>
             <div class="col-md-9">
                 <select class="form-select" id="groupSelection" name="groupSelection">
                     <option value="">请选择</option>
-                    <option value="普通人群" {% if survey.groupSelection == "普通人群" %}selected{% endif %}>普通人群</option>
-                    <option value="高危人群" {% if survey.groupSelection == "高危人群" %}selected{% endif %}>高危人群</option>
+                    <option value="低收入人群" {% if survey.groupSelection == "低收入人群" %}selected{% endif %}>低收入人群</option>
+                    <option value="失独家庭" {% if survey.groupSelection == "失独家庭" %}selected{% endif %}>失独家庭</option>
+                    <option value="残疾人群" {% if survey.groupSelection == "残疾人群" %}selected{% endif %}>残疾人群</option>
+                    <option value="困难家庭（低保、低编）" {% if survey.groupSelection == "困难家庭（低保、低编）" %}selected{% endif %}>困难家庭（低保、低编）</option>
+                    <option value="援助证" {% if survey.groupSelection == "援助证" %}selected{% endif %}>援助证</option>
+                    <option value="都不是" {% if survey.groupSelection == "都不是" %}selected{% endif %}>都不是</option>
                 </select>
             </div>
         </div>

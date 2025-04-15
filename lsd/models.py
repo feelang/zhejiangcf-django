@@ -14,8 +14,8 @@ class LsdOrganization(models.Model):
 
     class Meta:
         db_table = 'lsd_organization'
-        verbose_name = 'Lsd Organization'
-        verbose_name_plural = 'Lsd Organizations'
+        verbose_name = 'LSD Organization'
+        verbose_name_plural = 'LSD Organizations'
         ordering = ['name']
 
     def __str__(self):
@@ -68,8 +68,16 @@ class LsdSurvey(models.Model):
     occupation = models.CharField(max_length=50)
     # 项目
     project = models.CharField(max_length=100)
-    # 分组选择
-    groupSelection = models.CharField(max_length=50)
+    # 群体选择
+    GROUP_CHOICES = [
+        ('低收入人群', '低收入人群'),
+        ('失独家庭', '失独家庭'),
+        ('残疾人群', '残疾人群'),
+        ('困难家庭（低保、低编）', '困难家庭（低保、低编）'),
+        ('援助证', '援助证'),
+        ('都不是', '都不是'),
+    ]
+    groupSelection = models.CharField(max_length=50, choices=GROUP_CHOICES)
     # 性经历
     sexualExperience = models.BooleanField()
     # 宫颈癌筛查

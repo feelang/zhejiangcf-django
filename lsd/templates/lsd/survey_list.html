@@ -32,10 +32,10 @@
                 <th>姓名</th>
                 <th>手机号</th>
                 <th>年龄</th>
+                <th>群体</th>
                 <th>HPV结果</th>
                 <th>TCT结果</th>
-                <th>分组</th>
-                <th>更新日期</th>
+                <th>活检结果</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -45,10 +45,10 @@
                 <td class="{% if not survey.name %}text-danger{% endif %}">{{ survey.name|default:"未填写" }}</td>
                 <td class="{% if not survey.phone %}text-danger{% endif %}">{{ survey.phone|default:"未填写" }}</td>
                 <td class="{% if not survey.age %}text-danger{% endif %}">{{ survey.age|default:"未填写" }}</td>
+                <td class="{% if not survey.groupSelection %}text-danger{% endif %}">{{ survey.groupSelection|default:"未填写" }}</td>
                 <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"未填写" }}</td>
                 <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"未填写" }}</td>
-                <td class="{% if not survey.group_selection %}text-danger{% endif %}">{{ survey.group_selection|default:"未填写" }}</td>
-                <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
+                <td class="{% if not survey.biopsy_result %}text-danger{% endif %}">{{ survey.biopsy_result|default:"未填写" }}</td>
                 <td>
                     <a href="{% url 'lsd:edit_survey_page' survey.id %}" target="_blank" class="btn btn-sm btn-primary">编辑</a>
                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ survey.id }}">

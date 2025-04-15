@@ -5,9 +5,15 @@ app_name = 'lsd'
 
 urlpatterns = [
     # 管理后台页面
-    path('', views.list_surveys, name='list_surveys'),
-    path('create/', views.create_survey_page, name='create_survey_page'),
-    path('import/', views.import_surveys, name='import_surveys'),
+    path('', views.index, name='index'),
+    path('surveys/', views.survey_list, name='survey_list'),
+    path('surveys/create/', views.create_survey_page, name='create_survey_page'),
+    path('surveys/import/', views.import_surveys, name='import_surveys'),
+    path('surveys/<int:survey_id>/update/', views.update_survey, name='update_survey'),
+    path('surveys/<int:survey_id>/delete/', views.delete_survey, name='delete_survey'),
+    path('statistics/', views.statistics, name='statistics'),
+    path('export/', views.export_surveys, name='export_surveys'),
+    path('download-template/', views.download_template, name='download_template'),
 
     # 管理后台API
     path('api/surveys/create/', views.create_survey, name='create_survey'),

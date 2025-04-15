@@ -1,0 +1,78 @@
+{% extends 'lsd/base.html' %}
+
+{% block lsd_content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>导入问卷</h2>
+            {% if organization_name %}
+            <p class="text-muted">所属机构：{{ organization_name }} ({{ organization_code }})</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 导入说明 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">导入说明</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>请下载并填写Excel模板文件</li>
+                <li>确保Excel文件包含以下必填字段：
+                    <ul>
+                        <li>姓名</li>
+                        <li>年龄</li>
+                        <li>手机号（11位数字）</li>
+                        <li>职业</li>
+                        <li>群体选择</li>
+                    </ul>
+                </li>
+                <li>点击下方"选择文件"按钮上传Excel文件</li>
+                <li>系统会自动验证数据格式并导入</li>
+            </ol>
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                注意：导入过程中如果发现数据格式错误，系统会跳过该条记录并继续导入其他数据。
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入表单 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">上传文件</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" action="{% url 'lsd:import_surveys' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="excel_file" class="form-label">选择Excel文件</label>
+                    <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                    <div class="form-text">支持 .xlsx 和 .xls 格式</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="https://7072-prod-0gk0frb3550379f8-1350351077.tcb.qcloud.la/files/%E7%AD%9B%E6%9F%A5%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE%E7%99%BB%E8%AE%B0%E8%A1%A8.xlsx?sign=1f0ff5e95b372629928743a4f7e92fc8&t=1744684999" class="btn btn-outline-primary" download>
+                        <i class="bi bi-download me-2"></i>下载模板
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-2"></i>开始导入
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 导入结果 -->
+    {% if messages %}
+    <div class="mt-4">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

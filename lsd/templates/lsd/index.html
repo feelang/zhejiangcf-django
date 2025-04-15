@@ -1,0 +1,61 @@
+{% extends 'lsd/base.html' %}
+
+{% block lsd_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">蓝丝带问卷管理系统</h1>
+</div>
+
+<!-- 欢迎信息 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">欢迎使用蓝丝带问卷管理系统</h5>
+                <p class="card-text">
+                    本系统用于管理蓝丝带问卷数据，您可以：
+                </p>
+                <ul>
+                    <li>查看和管理问卷列表</li>
+                    <li>创建新的问卷记录</li>
+                    <li>导入Excel数据</li>
+                    <li>下载数据模板</li>
+                </ul>
+                <p class="card-text">
+                    请使用左侧菜单开始操作。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作卡片 -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">问卷列表</h5>
+                <p class="card-text">查看和管理所有问卷记录</p>
+                <a href="{% url 'lsd:survey_list' %}" class="btn btn-primary">查看列表</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">创建问卷</h5>
+                <p class="card-text">创建新的问卷记录</p>
+                <a href="{% url 'lsd:create_survey_page' %}" class="btn btn-primary">创建</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">导入数据</h5>
+                <p class="card-text">批量导入Excel数据</p>
+                <a href="{% url 'lsd:import_surveys' %}" class="btn btn-primary">导入</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'lsd:index' %}">蓝丝带公益行动</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lsd:statistics' %}">数据统计</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex">
+                    <span class="navbar-text text-light me-3">
+                        {% if user.is_authenticated %}
+                            {% if organization_name %}
+                                {{ organization_name }} ({{ organization_code }}) |
+                            {% endif %}
+                            欢迎，{{ user.username }}
+                        {% else %}
+                            未登录
+                        {% endif %}
+                    </span>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'logout' %}" class="btn btn-outline-light">退出</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-outline-light">登录</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="row">
+        <!-- 左侧菜单 -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'survey_list' %}active{% endif %}" href="{% url 'lsd:survey_list' %}">
+                            <i class="bi bi-list-ul me-2"></i>问卷列表
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'create_survey_page' %}active{% endif %}" href="{% url 'lsd:create_survey_page' %}">
+                            <i class="bi bi-plus-lg me-2"></i>创建问卷
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'import_surveys' %}active{% endif %}" href="{% url 'lsd:import_surveys' %}">
+                            <i class="bi bi-upload me-2"></i>导入Excel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://7072-prod-0gk0frb3550379f8-1350351077.tcb.qcloud.la/files/%E7%AD%9B%E6%9F%A5%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE%E7%99%BB%E8%AE%B0%E8%A1%A8.xlsx?sign=1f0ff5e95b372629928743a4f7e92fc8&t=1744684999" download>
+                            <i class="bi bi-download me-2"></i>下载模板
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-top: 40px;">
+            {% block lsd_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 48px 0 0;
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    }
+
+    .sidebar .nav-link {
+        font-weight: 500;
+        color: #333;
+        padding: 0.5rem 1rem;
+    }
+
+    .sidebar .nav-link.active {
+        color: #2470dc;
+    }
+
+    .sidebar .nav-link:hover {
+        color: #2470dc;
+    }
+
+    .sidebar .nav-link i {
+        margin-right: 4px;
+        color: #727272;
+    }
+
+    .sidebar .nav-link.active i {
+        color: #2470dc;
+    }
+
+    .sidebar-heading {
+        font-size: .75rem;
+        text-transform: uppercase;
+    }
+
+    .navbar-brand {
+        padding-top: .75rem;
+        padding-bottom: .75rem;
+        font-size: 1rem;
+        background-color: rgba(0, 0, 0, .25);
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+    }
+
+    .navbar .navbar-toggler {
+        top: .25rem;
+        right: 1rem;
+    }
+
+    .navbar .form-control {
+        padding: .75rem 1rem;
+        border-width: 0;
+        border-radius: 0;
+    }
+
+    .form-control-dark {
+        color: #fff;
+        background-color: rgba(255, 255, 255, .1);
+        border-color: rgba(255, 255, 255, .1);
+    }
+
+    .form-control-dark:focus {
+        border-color: transparent;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+    }
+</style>
+{% endblock %}

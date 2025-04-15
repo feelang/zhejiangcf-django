@@ -1,325 +1,115 @@
-{% extends 'base.html' %}
+{% extends 'lsd/base.html' %}
 {% load custom_filters %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-{% endblock %}
-
-{% block content %}
-<!-- 错误对话框 -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="errorModalLabel">提示</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-danger">
-                    用户未关联机构信息，请联系管理员进行关联
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
-            </div>
-        </div>
-    </div>
+{% block lsd_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">问卷列表</h1>
+    <span>机构：<strong>{{ organization_name }}</strong></span>
 </div>
 
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">首页</a></li>
-            <li class="breadcrumb-item active" aria-current="page">蓝丝带问卷</li>
-        </ol>
-    </nav>
-    <h2 class="mb-4">
-        问卷列表
-        {% if organization %}
-        <small class="text-muted ms-2">{{ organization.name }}</small>
-        {% endif %}
-    </h2>
-    <p class="text-muted mb-4">共 {{ page_obj.paginator.count }} 条记录</p>
-    
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="mb-4">
-        <form method="get" class="mb-3">
+<!-- 搜索和导入区域 -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <form method="get" class="d-flex align-items-center">
             <div class="input-group">
-                <input type="text" class="form-control" name="search" placeholder="输入姓名、手机号、HPV结果或TCT结果搜索..." value="{{ request.GET.search }}">
-                <button class="btn btn-primary" type="submit">搜索</button>
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="输入姓名、手机号、HPV结果或TCT结果搜索..." value="{{ request.GET.q }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
             </div>
         </form>
-        <div class="d-flex justify-content-between mb-3">
-            <form method="post" action="{% url 'lsd:import_surveys' %}" enctype="multipart/form-data" class="me-2">
-                {% csrf_token %}
-                <div class="input-group">
-                    <input type="file" class="form-control" name="excel_file" accept=".xls,.xlsx" required>
-                    <button class="btn btn-success" type="submit">导入Excel</button>
-                </div>
-            </form>
-            <div>
-                <a href="https://7072-prod-0gk0frb3550379f8-1350351077.tcb.qcloud.la/files/%E7%AD%9B%E6%9F%A5%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE%E7%99%BB%E8%AE%B0%E8%A1%A8.xlsx?sign=1f0ff5e95b372629928743a4f7e92fc8&t=1744684999" class="btn btn-outline-primary me-2" download>
-                    <i class="bi bi-download me-1"></i>下载模板
-                </a>
-                <a href="{% url 'lsd:create_survey_page' %}" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i>创建问卷
-                </a>
-            </div>
-        </div>
     </div>
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>姓名</th>
-                    <th>年龄</th>
-                    <th>电话</th>
-                    <th>HPV结果</th>
-                    <th>TCT结果</th>
-                    <th>活检结果</th>
-                    <th>更新日期</th>
-                    <th>状态</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for survey in surveys %}
-                <tr>
-                    <td>{{ survey.name }}</td>
-                    <td>
-                        {% if survey.age and survey.age >= 25 %}
-                            {{ survey.age }}
-                        {% else %}
-                            <span class="text-danger">{{ survey.age|default:'未填' }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if survey.phone|regex_match:"^1[3-9]\\d{9}$" %}
-                            {{ survey.phone }}
-                        {% else %}
-                            <span class="text-danger">{{ survey.phone }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ survey.hpv_result|default:'-' }}</td>
-                    <td>{{ survey.tct_result|default:'-' }}</td>
-                    <td>{{ survey.biopsy_result|default:'-' }}</td>
-                    <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
-                    <td>
-                        {% if survey.name and survey.age and survey.phone and survey.hpv_result and survey.tct_result %}
-                            <span class="badge bg-success">完整</span>
-                        {% else %}
-                            <span class="badge bg-danger">不完整</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ survey.id }}">
-                            编辑
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ survey.id }}">
-                            删除
-                        </button>
-                    </td>
-                </tr>
-
-                <!-- 删除确认对话框 -->
-                <div class="modal fade" id="deleteModal{{ survey.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ survey.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel{{ survey.id }}">确认删除</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>您确定要删除 <strong>{{ survey.name }}</strong> 的问卷记录吗？此操作不可撤销。</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-danger" onclick="deleteSurvey({{ survey.id }})">确认删除</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 编辑对话框 -->
-                <div class="modal fade" id="editModal{{ survey.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ survey.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="editModalLabel{{ survey.id }}">编辑问卷</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="editForm{{ survey.id }}">
-                                    <input type="hidden" name="survey_id" value="{{ survey.id }}">
-                                    <ul class="nav nav-tabs" id="editTabs{{ survey.id }}" role="tablist">
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="user-info-tab{{ survey.id }}" data-bs-toggle="tab" data-bs-target="#user-info{{ survey.id }}" type="button" role="tab" aria-controls="user-info{{ survey.id }}" aria-selected="true">用户信息</button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="test-results-tab{{ survey.id }}" data-bs-toggle="tab" data-bs-target="#test-results{{ survey.id }}" type="button" role="tab" aria-controls="test-results{{ survey.id }}" aria-selected="false">检测结果</button>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content pt-3" id="editTabsContent{{ survey.id }}">
-                                        <div class="tab-pane fade show active" id="user-info{{ survey.id }}" role="tabpanel" aria-labelledby="user-info-tab{{ survey.id }}">
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="name{{ survey.id }}" class="form-label">姓名</label>
-                                                    <input type="text" class="form-control" id="name{{ survey.id }}" name="name" value="{{ survey.name }}">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="age{{ survey.id }}" class="form-label">年龄</label>
-                                                    <input type="number" class="form-control" id="age{{ survey.id }}" name="age" value="{{ survey.age }}">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="phone{{ survey.id }}" class="form-label">手机号码</label>
-                                                    <input type="tel" class="form-control" id="phone{{ survey.id }}" name="phone" value="{{ survey.phone }}" pattern="^1[3-9]\d{9}$">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="organization{{ survey.id }}" class="form-label">单位</label>
-                                                    <input type="text" class="form-control" id="organization{{ survey.id }}" name="organization" value="{{ survey.organization }}">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="occupation{{ survey.id }}" class="form-label">职业</label>
-                                                    <input type="text" class="form-control" id="occupation{{ survey.id }}" name="occupation" value="{{ survey.occupation }}">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="project{{ survey.id }}" class="form-label">项目</label>
-                                                    <input type="text" class="form-control" id="project{{ survey.id }}" name="project" value="{{ survey.project }}">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="groupSelection{{ survey.id }}" class="form-label">分组选择</label>
-                                                    <select class="form-select" id="groupSelection{{ survey.id }}" name="groupSelection">
-                                                        <option value="低收入人群" {% if survey.groupSelection == '低收入人群' %}selected{% endif %}>低收入人群</option>
-                                                        <option value="失独家庭" {% if survey.groupSelection == '失独家庭' %}selected{% endif %}>失独家庭</option>
-                                                        <option value="残疾人群" {% if survey.groupSelection == '残疾人群' %}selected{% endif %}>残疾人群</option>
-                                                        <option value="困难家庭（低保、低编）" {% if survey.groupSelection == '困难家庭（低保、低编）' %}selected{% endif %}>困难家庭（低保、低编）</option>
-                                                        <option value="援助证" {% if survey.groupSelection == '援助证' %}selected{% endif %}>援助证</option>
-                                                        <option value="都不是" {% if survey.groupSelection == '都不是' %}selected{% endif %}>都不是</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="sexualExperience{{ survey.id }}" class="form-label">性经历</label>
-                                                    <select class="form-select" id="sexualExperience{{ survey.id }}" name="sexualExperience">
-                                                        <option value="true" {% if survey.sexualExperience %}selected{% endif %}>是</option>
-                                                        <option value="false" {% if not survey.sexualExperience %}selected{% endif %}>否</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="cervicalCancerScreening{{ survey.id }}" class="form-label">宫颈癌筛查</label>
-                                                    <select class="form-select" id="cervicalCancerScreening{{ survey.id }}" name="cervicalCancerScreening">
-                                                        <option value="true" {% if survey.cervicalCancerScreening %}selected{% endif %}>是</option>
-                                                        <option value="false" {% if not survey.cervicalCancerScreening %}selected{% endif %}>否</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="tab-pane fade" id="test-results{{ survey.id }}" role="tabpanel" aria-labelledby="test-results-tab{{ survey.id }}">
-                                            <div class="mb-3">
-                                                <label for="hpv_result{{ survey.id }}" class="form-label">HPV结果</label>
-                                                <select class="form-select" id="hpv_result{{ survey.id }}" name="hpv_result">
-                                                    <option value="">请选择</option>
-                                                    <option value="阴性" {% if survey.hpv_result == '阴性' %}selected{% endif %}>阴性</option>
-                                                    <option value="16型+" {% if survey.hpv_result == '16型+' %}selected{% endif %}>16型+</option>
-                                                    <option value="18/45型+" {% if survey.hpv_result == '18/45型+' %}selected{% endif %}>18/45型+</option>
-                                                    <option value="16型+ 18/45型+" {% if survey.hpv_result == '16型+ 18/45型+' %}selected{% endif %}>16型+ 18/45型+</option>
-                                                    <option value="其余11型+" {% if survey.hpv_result == '其余11型+' %}selected{% endif %}>其余11型+</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="tct_result{{ survey.id }}" class="form-label">TCT结果</label>
-                                                <select class="form-select" id="tct_result{{ survey.id }}" name="tct_result">
-                                                    <option value="">请选择</option>
-                                                    <option value="未做" {% if survey.tct_result == '未做' %}selected{% endif %}>未做</option>
-                                                    <option value="霉菌感染、滴虫感染" {% if survey.tct_result == '霉菌感染、滴虫感染' %}selected{% endif %}>霉菌感染、滴虫感染</option>
-                                                    <option value="NILM" {% if survey.tct_result == 'NILM' %}selected{% endif %}>NILM</option>
-                                                    <option value="ASC-US" {% if survey.tct_result == 'ASC-US' %}selected{% endif %}>ASC-US</option>
-                                                    <option value="ASC-H" {% if survey.tct_result == 'ASC-H' %}selected{% endif %}>ASC-H</option>
-                                                    <option value="LSIL" {% if survey.tct_result == 'LSIL' %}selected{% endif %}>LSIL</option>
-                                                    <option value="HSIL" {% if survey.tct_result == 'HSIL' %}selected{% endif %}>HSIL</option>
-                                                    <option value="AGC" {% if survey.tct_result == 'AGC' %}selected{% endif %}>AGC</option>
-                                                    <option value="SCC" {% if survey.tct_result == 'SCC' %}selected{% endif %}>SCC</option>
-                                                </select>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="biopsy_result{{ survey.id }}" class="form-label">活检结果</label>
-                                                <textarea class="form-control" id="biopsy_result{{ survey.id }}" name="biopsy_result" rows="3">{{ survey.biopsy_result|default:'' }}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="remark{{ survey.id }}" class="form-label">备注</label>
-                                                <textarea class="form-control" id="remark{{ survey.id }}" name="remark" rows="3">{{ survey.remark|default:'' }}</textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" onclick="updateSurvey({{ survey.id }})">保存</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    
-    {% if is_paginated %}
-    <nav aria-label="Page navigation" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&laquo;</span>
-            </li>
-            {% endif %}
-            
-            {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-            {% endif %}
-            {% endfor %}
-            
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&raquo;</span>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
+
+<!-- 问卷列表 -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>手机号</th>
+                <th>年龄</th>
+                <th>HPV结果</th>
+                <th>TCT结果</th>
+                <th>分组</th>
+                <th>更新日期</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for survey in page_obj %}
+            <tr>
+                <td class="{% if not survey.name %}text-danger{% endif %}">{{ survey.name|default:"未填写" }}</td>
+                <td class="{% if not survey.phone %}text-danger{% endif %}">{{ survey.phone|default:"未填写" }}</td>
+                <td class="{% if not survey.age %}text-danger{% endif %}">{{ survey.age|default:"未填写" }}</td>
+                <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"未填写" }}</td>
+                <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"未填写" }}</td>
+                <td class="{% if not survey.group_selection %}text-danger{% endif %}">{{ survey.group_selection|default:"未填写" }}</td>
+                <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
+                <td>
+                    <a href="{% url 'lsd:update_survey' survey.id %}" class="btn btn-sm btn-primary">编辑</a>
+                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ survey.id }}">
+                        删除
+                    </button>
+                </td>
+            </tr>
+            <!-- 删除确认模态框 -->
+            <div class="modal fade" id="deleteModal{{ survey.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">确认删除</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            确定要删除 {{ survey.name }} 的问卷记录吗？
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <form method="post" action="{% url 'lsd:delete_survey' survey.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">确认删除</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">暂无问卷记录</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 分页 -->
+{% if is_paginated %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">上一页</a>
+        </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">下一页</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

@@ -1,0 +1,68 @@
+{% extends 'lsd/base.html' %}
+
+{% block lsd_content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>数据统计</h2>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'lsd:export_surveys' %}" class="btn btn-success">
+                <i class="bi bi-download me-2"></i>导出数据
+            </a>
+        </div>
+    </div>
+
+    <!-- 总体统计 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">总体统计</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">问卷总数</h5>
+                            <p class="card-text display-4">{{ total_surveys }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 机构统计 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">按机构统计</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>机构名称</th>
+                            <th>机构代码</th>
+                            <th>问卷数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for survey in surveys_by_org %}
+                        <tr>
+                            <td>{{ survey.org_name }}</td>
+                            <td>{{ survey.organization }}</td>
+                            <td>{{ survey.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

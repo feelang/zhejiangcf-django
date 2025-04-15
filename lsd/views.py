@@ -2,20 +2,27 @@ import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
-from .models import LsdSurvey
+from .models import LsdSurvey, LsdOrganization
 from django.core.serializers import serialize
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import openpyxl
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import UserProfile
 import re
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+from datetime import datetime
 
 logger = logging.getLogger('log')
+
+@login_required
+def index(request):
+    return render(request, 'lsd/index.html')
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -208,43 +215,43 @@ def update_survey(request, survey_id):
         }, status=500)
 
 @login_required
-def list_surveys(request):
+def survey_list(request):
     # 获取用户所属机构
     try:
         user_profile = request.user.profile
         organization = user_profile.organization if user_profile and user_profile.organization else None
+        organization_name = organization.name if organization else None
         organization_code = organization.code if organization else None
-        logger.info(f'organization_code: {organization_code}')
     except UserProfile.DoesNotExist:
         organization = None
+        organization_name = None
         organization_code = None
 
-    # 如果是staff用户，允许查看所有问卷
-    if request.user.is_staff:
-        organization = None
-        organization_code = None
-        logger.info('User is staff, showing all surveys')
-    elif organization_code is None:
-        messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
-        return render(request, 'lsd/survey_list.html', {
-            'surveys': [],
-            'search_query': '',
-            'organization': None,
-            'organization_code': None,
-            'show_error_modal': True
-        })
+    logger.info(f'organization: {organization}')
+
+    # 检查用户是否属于lsd组
+    is_lsd_user = request.user.groups.filter(name='lsd').exists()
+
+    logger.info(f'is_lsd_user: {is_lsd_user}')
+
+    if not is_lsd_user:
+        messages.error(request, '您没有权限查看问卷列表')
+        return redirect('lsd:index')
 
     # 获取搜索参数
-    search_query = request.GET.get('search', '')
-    
-    # 构建查询
-    surveys = LsdSurvey.objects.all()
-    
-    # 根据机构过滤
-    if organization_code:
-        surveys = surveys.filter(organization=organization_code)
-    
-    # 如果有搜索查询，添加搜索条件
+    search_query = request.GET.get('q', '')
+
+    # 获取问卷列表
+    if is_lsd_user:
+        # lsd组用户可以查看所有问卷
+        surveys = LsdSurvey.objects.all()
+    else:
+        # 普通用户只能查看自己机构的问卷
+        surveys = LsdSurvey.objects.filter(organization=organization_code)
+
+    logger.info(f'surveys: {surveys}')
+
+    # 如果有搜索参数，添加过滤条件
     if search_query:
         surveys = surveys.filter(
             Q(name__icontains=search_query) |
@@ -252,146 +259,138 @@ def list_surveys(request):
             Q(hpv_result__icontains=search_query) |
             Q(tct_result__icontains=search_query)
         )
-    
+
     # 按更新时间倒序排序
     surveys = surveys.order_by('-updated_at')
-    
+
     # 分页
-    page = request.GET.get('page', 1)
     paginator = Paginator(surveys, 10)  # 每页显示10条记录
-    
-    try:
-        page_obj = paginator.page(page)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
-    
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'lsd/survey_list.html', {
-        'surveys': page_obj,
-        'search_query': search_query,
-        'organization': organization,
-        'organization_code': organization_code,
-        'show_error_modal': False,
-        'is_staff': request.user.is_staff,
+        'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
-        'page_obj': page_obj
+        'organization': organization,
+        'organization_name': organization_name,
+        'organization_code': organization_code,
+        'is_lsd_user': is_lsd_user
     })
 
 @login_required
-@require_http_methods(["POST"])
 def import_surveys(request):
+    # 获取用户所属机构
     try:
+        user_profile = request.user.profile
+        organization = user_profile.organization if user_profile and user_profile.organization else None
+        organization_name = organization.name if organization else None
+        organization_code = organization.code if organization else None
+    except UserProfile.DoesNotExist:
+        organization = None
+        organization_name = None
+        organization_code = None
+
+    if request.method == 'POST':
         if 'excel_file' not in request.FILES:
             messages.error(request, '请选择要导入的Excel文件')
-            return redirect('lsd:survey_list')
+            return redirect('lsd:import_surveys')
 
         excel_file = request.FILES['excel_file']
         if not excel_file.name.endswith(('.xls', '.xlsx')):
             messages.error(request, '请上传Excel文件(.xls或.xlsx)')
-            return redirect('lsd:survey_list')
+            return redirect('lsd:import_surveys')
 
-        # 从用户 profile 获取机构信息
-        organization = request.user.profile.organization.code if request.user.profile and request.user.profile.organization else ''
-        if not organization:
-            messages.error(request, '用户未关联机构信息')
-            return redirect('lsd:survey_list')
+        try:
+            # 读取Excel文件
+            workbook = openpyxl.load_workbook(excel_file)
+            sheet = workbook.active
 
-        # 读取Excel文件
-        workbook = openpyxl.load_workbook(excel_file)
-        sheet = workbook.active
-        
-        # 验证必要的列是否存在
-        headers = [str(cell.value).strip() for cell in sheet[1]]
-        required_columns = ['序号', '姓名', '年龄', '职业', '群体选择', '电话', 
-                          '是否有过性生活', '一年内是否做过宫颈癌筛查', 
-                          '本次活动-HPV结果', '本次活动-TCT结果', '活检结果', '备注']
-        
-        missing_columns = [col for col in required_columns if col not in headers]
-        if missing_columns:
-            messages.error(request, f'Excel文件缺少必要的列: {", ".join(missing_columns)}')
-            return redirect('lsd:survey_list')
+            # 验证必要的列是否存在
+            headers = [str(cell.value).strip() for cell in sheet[1]]
+            required_columns = ['姓名', '年龄', '手机号', '职业', '群体选择']
+            missing_columns = [col for col in required_columns if col not in headers]
+            if missing_columns:
+                messages.error(request, f'Excel文件缺少必要的列: {", ".join(missing_columns)}')
+                return redirect('lsd:import_surveys')
 
-        # 获取列索引
-        column_indices = {col: headers.index(col) + 1 for col in required_columns}
-        
-        # 导入数据
-        success_count = 0
-        error_count = 0
-        skipped_count = 0
-        invalid_phone_count = 0
-        invalid_phone_records = []
-        
-        for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):  # 从第二行开始（跳过表头）
-            try:
-                # 获取行数据
-                row_data = {col: str(row[idx-1].value).strip() if row[idx-1].value is not None else '' for col, idx in column_indices.items()}
-                
-                # 检查姓名和电话是否为空
-                if not row_data['姓名'] or not row_data['电话']:
-                    skipped_count += 1
-                    logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
-                    continue
-                
-                # 处理并验证手机号
-                phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
-                is_valid_phone = bool(re.match(r'^1[3-9]\d{9}$', phone))  # 验证中国大陆手机号格式
-                
-                if not is_valid_phone:
-                    invalid_phone_count += 1
-                    invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
-                    logger.info(f'无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
-                
-                # 转换布尔值
-                sexual_experience = str(row_data['是否有过性生活']).lower() in ['是', '有', 'yes', 'true', '1']
-                cervical_screening = str(row_data['一年内是否做过宫颈癌筛查']).lower() in ['是', '有', 'yes', 'true', '1']
+            # 获取列索引
+            column_indices = {col: headers.index(col) + 1 for col in required_columns}
 
-                # 转换年龄为整数
+            # 导入数据
+            success_count = 0
+            error_count = 0
+            skipped_count = 0
+            invalid_phone_count = 0
+            invalid_phone_records = []
+
+            for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):  # 从第二行开始（跳过表头）
                 try:
-                    age = int(float(row_data['年龄']))
-                except (ValueError, TypeError):
-                    age = 0
-                
-                # 创建或更新调查记录
-                survey, created = LsdSurvey.objects.update_or_create(
-                    phone=phone,
-                    name=row_data['姓名'],
-                    defaults={
-                        '_openId': f"import_{phone}",
-                        'age': age,
-                        'organization': organization,
-                        'occupation': row_data['职业'],
-                        'project': '蓝丝带公益行动',
-                        'groupSelection': row_data['群体选择'],
-                        'sexualExperience': sexual_experience,
-                        'cervicalCancerScreening': cervical_screening,
-                        'hpv_result': row_data['本次活动-HPV结果'],
-                        'tct_result': row_data['本次活动-TCT结果'],
-                        'biopsy_result': row_data['活检结果'],
-                        'remark': row_data['备注']
-                    }
-                )
-                
-                success_count += 1
-            except Exception as e:
-                error_count += 1
-                logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx}, 数据: {row_data}')
+                    # 获取行数据
+                    row_data = {col: str(row[idx-1].value).strip() if row[idx-1].value is not None else '' for col, idx in column_indices.items()}
 
-        # 构建消息
-        message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
-        if invalid_phone_count > 0:
-            message += f'，其中 {invalid_phone_count} 条手机号格式不正确'
-            if len(invalid_phone_records) <= 5:  # 如果无效手机号记录不多，直接显示
-                message += f'：{", ".join(invalid_phone_records)}'
-            else:  # 如果无效手机号记录较多，只显示前5条
-                message += f'：{", ".join(invalid_phone_records[:5])}等'
-        
-        messages.success(request, message)
-        return redirect('lsd:survey_list')
+                    # 检查姓名和电话是否为空
+                    if not row_data['姓名'] or not row_data['手机号']:
+                        skipped_count += 1
+                        logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["手机号"]}')
+                        continue
 
-    except Exception as e:
-        messages.error(request, f'导入失败: {str(e)}')
-        return redirect('lsd:survey_list')
+                    # 处理并验证手机号
+                    phone = str(row_data['手机号']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
+                    is_valid_phone = bool(re.match(r'^1[3-9]\d{9}$', phone))  # 验证中国大陆手机号格式
+
+                    if not is_valid_phone:
+                        invalid_phone_count += 1
+                        invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
+                        logger.info(f'无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
+                        continue
+
+                    # 转换年龄为整数
+                    try:
+                        age = int(float(row_data['年龄']))
+                    except (ValueError, TypeError):
+                        age = 0
+
+                    # 创建或更新调查记录
+                    survey, created = LsdSurvey.objects.update_or_create(
+                        phone=phone,
+                        name=row_data['姓名'],
+                        defaults={
+                            '_openId': f"import_{phone}",
+                            'age': age,
+                            'organization': organization_code,
+                            'occupation': row_data['职业'],
+                            'project': '蓝丝带公益行动',
+                            'groupSelection': row_data['群体选择'],
+                            'sexualExperience': False,  # 默认值
+                            'cervicalCancerScreening': False,  # 默认值
+                        }
+                    )
+
+                    success_count += 1
+                except Exception as e:
+                    error_count += 1
+                    logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx}, 数据: {row_data}')
+
+            # 构建消息
+            message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
+            if invalid_phone_count > 0:
+                message += f'，其中 {invalid_phone_count} 条手机号格式不正确'
+                if len(invalid_phone_records) <= 5:  # 如果无效手机号记录不多，直接显示
+                    message += f'：{", ".join(invalid_phone_records)}'
+                else:  # 如果无效手机号记录较多，只显示前5条
+                    message += f'：{", ".join(invalid_phone_records[:5])}等'
+
+            messages.success(request, message)
+            return redirect('lsd:import_surveys')
+
+        except Exception as e:
+            messages.error(request, f'导入失败: {str(e)}')
+            return redirect('lsd:import_surveys')
+
+    return render(request, 'lsd/import_surveys.html', {
+        'organization_name': organization_name,
+        'organization_code': organization_code,
+    })
 
 @login_required
 @require_http_methods(["POST"])
@@ -448,8 +447,141 @@ def create_survey_page(request):
 
     if not organization:
         messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
-        return redirect('lsd:list_surveys')
+        return redirect('lsd:survey_list')
 
     return render(request, 'lsd/create_survey.html', {
         'organization': organization
     })
+
+@login_required
+def statistics(request):
+    # 检查用户是否是管理员
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限访问此页面')
+        return redirect('lsd:index')
+
+    # 获取问卷总数
+    total_surveys = LsdSurvey.objects.count()
+
+    # 按机构统计问卷数量
+    surveys_by_org = LsdSurvey.objects.values('organization').annotate(count=Count('id')).order_by('-count')
+
+    # 获取机构名称
+    org_names = {}
+    for org in LsdOrganization.objects.all():
+        org_names[org.code] = org.name
+
+    # 添加机构名称到统计结果中
+    for survey in surveys_by_org:
+        survey['org_name'] = org_names.get(survey['organization'], '未知机构')
+
+    context = {
+        'total_surveys': total_surveys,
+        'surveys_by_org': surveys_by_org,
+    }
+    return render(request, 'lsd/statistics.html', context)
+
+@login_required
+def export_surveys(request):
+    # 检查用户是否是管理员
+    if not request.user.is_staff:
+        messages.error(request, '您没有权限执行此操作')
+        return redirect('lsd:index')
+
+    # 创建Excel工作簿
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "问卷数据"
+
+    # 定义表头
+    headers = [
+        '姓名', '年龄', '手机号', '机构', '职业', '项目', '分组选择',
+        '性经历', '宫颈癌筛查', 'HPV结果', 'TCT结果', '活检结果', '备注',
+        '创建时间', '更新时间'
+    ]
+
+    # 设置表头样式
+    header_font = Font(bold=True)
+    header_fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center')
+
+    # 写入表头
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+
+    # 获取所有问卷数据
+    surveys = LsdSurvey.objects.all().order_by('-created_at')
+
+    # 写入数据
+    for row_num, survey in enumerate(surveys, 2):
+        ws.cell(row=row_num, column=1, value=survey.name)
+        ws.cell(row=row_num, column=2, value=survey.age)
+        ws.cell(row=row_num, column=3, value=survey.phone)
+        ws.cell(row=row_num, column=4, value=survey.organization)
+        ws.cell(row=row_num, column=5, value=survey.occupation)
+        ws.cell(row=row_num, column=6, value=survey.project)
+        ws.cell(row=row_num, column=7, value=survey.groupSelection)
+        ws.cell(row=row_num, column=8, value='是' if survey.sexualExperience else '否')
+        ws.cell(row=row_num, column=9, value='是' if survey.cervicalCancerScreening else '否')
+        ws.cell(row=row_num, column=10, value=survey.hpv_result or '')
+        ws.cell(row=row_num, column=11, value=survey.tct_result or '')
+        ws.cell(row=row_num, column=12, value=survey.biopsy_result or '')
+        ws.cell(row=row_num, column=13, value=survey.remark or '')
+        ws.cell(row=row_num, column=14, value=survey.created_at.strftime('%Y-%m-%d %H:%M:%S'))
+        ws.cell(row=row_num, column=15, value=survey.updated_at.strftime('%Y-%m-%d %H:%M:%S'))
+
+    # 调整列宽
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    # 设置所有单元格居中对齐
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    # 创建响应
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f'问卷数据_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+
+    # 保存工作簿到响应
+    wb.save(response)
+    return response
+
+@login_required
+def download_template(request):
+    # 创建新的工作簿
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    
+    # 设置表头
+    headers = ['姓名', '年龄', '手机号', '职业', '群体选择']
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center')
+    
+    # 设置列宽
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 15
+    
+    # 创建响应
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=问卷导入模板.xlsx'
+    
+    # 保存工作簿到响应
+    wb.save(response)
+    return response

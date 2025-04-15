@@ -22,6 +22,27 @@ def create_survey(request):
                 'message': '未授权访问'
             }, status=401)
 
+        # 群体选择列表
+        GROUP_SELECTION_LIST = ['低收入人群', '失独家庭', '残疾人群', '困难家庭（低保、低编）', '援助证', '都不是']
+        
+        # 验证 groupSelection 是否为有效的数组下标
+        group_selection_index = data.get('groupSelection')
+        if not isinstance(group_selection_index, int) or group_selection_index < 0 or group_selection_index >= len(GROUP_SELECTION_LIST):
+            return JsonResponse({
+                'code': 400,
+                'message': '无效的群体选择'
+            }, status=400)
+
+        # 验证 sexualExperience 和 cervicalCancerScreening 是否为 0 或 1
+        sexual_experience = data.get('sexualExperience')
+        cervical_screening = data.get('cervicalCancerScreening')
+        if not isinstance(sexual_experience, int) or sexual_experience not in [0, 1] or \
+           not isinstance(cervical_screening, int) or cervical_screening not in [0, 1]:
+            return JsonResponse({
+                'code': 400,
+                'message': 'sexualExperience 和 cervicalCancerScreening 必须为 0 或 1'
+            }, status=400)
+
         # 创建新的调查记录
         survey = LsdSurvey(
             _openId=openid,
@@ -31,9 +52,9 @@ def create_survey(request):
             organization=data.get('organization'),
             occupation=data.get('occupation'),
             project=data.get('project'),
-            groupSelection=data.get('groupSelection'),
-            sexualExperience=data.get('sexualExperience'),
-            cervicalCancerScreening=data.get('cervicalCancerScreening')
+            groupSelection=GROUP_SELECTION_LIST[group_selection_index],
+            sexualExperience=bool(sexual_experience),
+            cervicalCancerScreening=bool(cervical_screening)
         )
 
         # 保存到数据库

@@ -1,59 +1,10 @@
 {% extends 'lsd/base.html' %}
 
 {% block lsd_content %}
-<div class="container mt-4">
-    <div class="d-flex align-items-end mb-4">
-        <h1 class="h2 mb-0 me-3">导入问卷</h1>
-        <span class="bg-light text-dark">机构：<strong>{{ organization_name }}</strong></span>
-    </div>
-
-    <!-- 导入说明 -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom">
-            <h5 class="card-title mb-0 text-primary">
-                <i class="bi bi-info-circle me-2"></i>导入说明
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <a href="https://7072-prod-0gk0frb3550379f8-1350351077.tcb.qcloud.la/files/%E7%AD%9B%E6%9F%A5%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE%E7%99%BB%E8%AE%B0%E8%A1%A8.xlsx?sign=1f0ff5e95b372629928743a4f7e92fc8&t=1744684999" class="btn btn-outline-primary" download>
-                    <i class="bi bi-download me-2"></i>下载Excel模板文件</a>
-            </div>
-            <div class="alert alert-warning border-0 mb-0">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                注意：导入过程中如果发现数据格式错误，系统会跳过该条记录并继续导入其他数据。
-            </div>
-        </div>
-    </div>
-
-    <!-- 导入表单 -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-bottom">
-            <h5 class="card-title mb-0 text-primary">
-                <i class="bi bi-file-earmark-arrow-up me-2"></i>选择Excel文件
-            </h5>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data" action="{% url 'lsd:import_surveys' %}">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
-                    <div class="form-text text-muted mt-1">
-                        <i class="bi bi-info-circle me-1"></i>支持 .xlsx 和 .xls 格式
-                    </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-upload me-2"></i>开始导入
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 导入结果 -->
+<div class="container mb-5">
+    <!-- 消息显示区域 -->
     {% if messages %}
-    <div class="mt-4">
+    <div class="mb-4">
         {% for message in messages %}
         <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show border-0 shadow-sm" role="alert">
             <i class="bi {% if message.tags == 'error' %}bi-exclamation-circle{% else %}bi-check-circle{% endif %} me-2"></i>
@@ -63,5 +14,58 @@
         {% endfor %}
     </div>
     {% endif %}
+
+    <div class="d-flex align-items-end mb-4">
+        <h2 class="mb-0 me-3">导入问卷</h2>
+        <span class="badge bg-light text-primary">{{ organization.name }}</span>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'lsd:import_surveys' %}" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- 导入说明 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label class="form-label">导入说明</label>
+            </div>
+            <div class="col-md-9">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <a href="https://7072-prod-0gk0frb3550379f8-1350351077.tcb.qcloud.la/files/%E7%AD%9B%E6%9F%A5%E7%BB%93%E6%9E%9C%E6%95%B0%E6%8D%AE%E7%99%BB%E8%AE%B0%E8%A1%A8.xlsx?sign=1f0ff5e95b372629928743a4f7e92fc8&t=1744684999" class="btn btn-outline-primary" download>
+                                <i class="bi bi-download me-2"></i>下载Excel模板文件
+                            </a>
+                        </div>
+                        <div class="alert alert-warning border-0 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            注意：导入过程中如果发现数据格式错误，系统会跳过该条记录并继续导入其他数据。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件上传 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label for="excel_file" class="form-label">选择Excel文件 <span class="text-danger">*</span></label>
+            </div>
+            <div class="col-md-9">
+                <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                <div class="form-text text-muted mt-1">
+                    <i class="bi bi-info-circle me-1"></i>支持 .xlsx 和 .xls 格式
+                </div>
+            </div>
+        </div>
+
+        <!-- 按钮 -->
+        <div class="row">
+            <div class="col-md-9 offset-md-3">
+                <button type="submit" class="btn btn-primary" {% if not organization %}disabled{% endif %}>
+                    <i class="bi bi-upload me-2"></i>开始导入
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 {% endblock %}

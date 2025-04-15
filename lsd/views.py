@@ -278,12 +278,12 @@ def import_surveys(request):
     try:
         user_profile = request.user.profile
         organization = user_profile.organization if user_profile and user_profile.organization else None
-        organization_name = organization.name if organization else None
-        organization_code = organization.code if organization else None
     except UserProfile.DoesNotExist:
         organization = None
-        organization_name = None
-        organization_code = None
+
+    if not organization:
+        messages.error(request, '您未关联任何机构，请联系管理员进行关联')
+        return redirect('lsd:survey_list')
 
     if request.method == 'POST':
         if 'excel_file' not in request.FILES:
@@ -302,7 +302,7 @@ def import_surveys(request):
 
             # 验证必要的列是否存在
             headers = [str(cell.value).strip() for cell in sheet[1]]
-            required_columns = ['姓名', '年龄', '手机号', '职业', '群体选择']
+            required_columns = ['序号', '姓名', '年龄', '职业', '群体选择', '电话', '是否有过性生活', '一年内是否做过宫颈癌筛查', '本次活动-HPV结果', '本次活动-TCT结果', '活检结果', '备注']
             missing_columns = [col for col in required_columns if col not in headers]
             if missing_columns:
                 messages.error(request, f'Excel文件缺少必要的列: {", ".join(missing_columns)}')
@@ -324,20 +324,23 @@ def import_surveys(request):
                     row_data = {col: str(row[idx-1].value).strip() if row[idx-1].value is not None else '' for col, idx in column_indices.items()}
 
                     # 检查姓名和电话是否为空
-                    if not row_data['姓名'] or not row_data['手机号']:
+                    if not row_data['姓名'] or not row_data['电话']:
                         skipped_count += 1
-                        logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["手机号"]}')
+                        logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
                         continue
 
                     # 处理并验证手机号
-                    phone = str(row_data['手机号']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
+                    phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
                     is_valid_phone = bool(re.match(r'^1[3-9]\d{9}$', phone))  # 验证中国大陆手机号格式
 
                     if not is_valid_phone:
                         invalid_phone_count += 1
                         invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
                         logger.info(f'无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
-                        continue
+
+                    # 转换布尔值
+                    sexual_experience = str(row_data['是否有过性生活']).lower() in ['是', '有', 'yes', 'true', '1']
+                    cervical_screening = str(row_data['一年内是否做过宫颈癌筛查']).lower() in ['是', '有', 'yes', 'true', '1']
 
                     # 转换年龄为整数
                     try:
@@ -352,12 +355,16 @@ def import_surveys(request):
                         defaults={
                             '_openId': f"import_{phone}",
                             'age': age,
-                            'organization': organization_code,
+                            'organization': organization.code,
                             'occupation': row_data['职业'],
                             'project': '蓝丝带公益行动',
                             'groupSelection': row_data['群体选择'],
-                            'sexualExperience': False,  # 默认值
-                            'cervicalCancerScreening': False,  # 默认值
+                            'sexualExperience': sexual_experience,
+                            'cervicalCancerScreening': cervical_screening,
+                            'hpv_result': row_data['本次活动-HPV结果'],
+                            'tct_result': row_data['本次活动-TCT结果'],
+                            'biopsy_result': row_data['活检结果'],
+                            'remark': row_data['备注']
                         }
                     )
 
@@ -383,8 +390,7 @@ def import_surveys(request):
             return redirect('lsd:import_surveys')
 
     return render(request, 'lsd/import_surveys.html', {
-        'organization_name': organization_name,
-        'organization_code': organization_code,
+        'organization': organization,
     })
 
 @login_required

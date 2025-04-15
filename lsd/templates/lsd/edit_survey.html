@@ -167,8 +167,41 @@
 
 {% block extra_js %}
 <script>
+// Function to check field values and update label colors
+function updateLabelColors() {
+    const form = document.getElementById('editForm');
+    const fields = form.querySelectorAll('input, select, textarea');
+    
+    fields.forEach(field => {
+        const label = form.querySelector(`label[for="${field.id}"]`);
+        if (label) {
+            if (field.id === 'age') {
+                // Special handling for age field
+                const age = parseInt(field.value);
+                if (field.value === '' || field.value === null || (age < 25)) {
+                    label.classList.add('text-danger');
+                } else {
+                    label.classList.remove('text-danger');
+                }
+            } else {
+                // Normal handling for other fields
+                if (field.value === '' || field.value === null) {
+                    label.classList.add('text-danger');
+                } else {
+                    label.classList.remove('text-danger');
+                }
+            }
+        }
+    });
+}
+
+// Initial check when page loads
+document.addEventListener('DOMContentLoaded', updateLabelColors);
+
+// Check on form submission
 document.getElementById('editForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    updateLabelColors();
     
     const formData = new FormData(this);
     const data = {
@@ -207,6 +240,12 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
         console.error('Error:', error);
         alert('更新失败');
     });
+});
+
+// Add input event listeners to all form fields
+document.querySelectorAll('#editForm input, #editForm select, #editForm textarea').forEach(field => {
+    field.addEventListener('input', updateLabelColors);
+    field.addEventListener('change', updateLabelColors);
 });
 
 function getCookie(name) {

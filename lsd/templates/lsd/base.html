@@ -20,8 +20,8 @@
                 <div class="d-flex">
                     <span class="navbar-text text-light me-3">
                         {% if user.is_authenticated %}
-                            {% if organization_name %}
-                                {{ organization_name }} ({{ organization_code }}) |
+                            {% if organization %}
+                                {{ organization.name }} ({{ organization.code }}) |
                             {% endif %}
                             欢迎，{{ user.username }}
                         {% else %}

@@ -34,6 +34,7 @@
                 <th>HPV结果</th>
                 <th>TCT结果</th>
                 <th>活检结果</th>
+                <th>机构代码</th>
                 <th>状态</th>
                 <th>操作</th>
             </tr>
@@ -46,8 +47,9 @@
                 <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"-" }}</td>
                 <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"-" }}</td>
                 <td class="{% if not survey.biopsy_result %}text-danger{% endif %}">{{ survey.biopsy_result|default:"-" }}</td>
+                <td>{{ survey.organization|default:"-" }}</td>
                 <td>
-                    {% if not survey.name or not survey.phone or not survey.age or not survey.organization or not survey.occupation or not survey.project or not survey.groupSelection or survey.sexualExperience is None or survey.cervicalCancerScreening is None or not survey.hpv_result or not survey.tct_result or not survey.biopsy_result %}
+                    {% if not survey.name or not survey.phone or not survey.age or survey.age < 25 or not survey.organization or not survey.occupation or not survey.project or not survey.groupSelection or survey.sexualExperience is None or survey.cervicalCancerScreening is None or not survey.hpv_result or not survey.tct_result or not survey.biopsy_result %}
                     <button type="button" class="btn btn-sm text-danger bg-danger bg-opacity-10 me-1" onclick="viewSurvey({{ survey.id }}, '{{ survey.name }}', '{{ survey.age }}', '{{ survey.phone }}', '{{ survey.organization }}', '{{ survey.occupation }}', '{{ survey.project }}', '{{ survey.groupSelection }}', '{{ survey.sexualExperience }}', '{{ survey.cervicalCancerScreening }}', '{{ survey.hpv_result }}', '{{ survey.tct_result }}', '{{ survey.biopsy_result }}', '{{ survey.remark }}')" title="查看"><i class="bi bi-exclamation-circle"></i></button>
                     {% else %}
                     <button type="button" class="btn btn-sm text-success bg-success bg-opacity-10 me-1" onclick="viewSurvey({{ survey.id }}, '{{ survey.name }}', '{{ survey.age }}', '{{ survey.phone }}', '{{ survey.organization }}', '{{ survey.occupation }}', '{{ survey.project }}', '{{ survey.groupSelection }}', '{{ survey.sexualExperience }}', '{{ survey.cervicalCancerScreening }}', '{{ survey.hpv_result }}', '{{ survey.tct_result }}', '{{ survey.biopsy_result }}', '{{ survey.remark }}')" title="查看"><i class="bi bi-check-circle"></i></button>
@@ -233,47 +235,6 @@ function deleteSurvey(surveyId) {
     });
 }
 
-function addSurvey() {
-    const form = document.getElementById('addForm');
-    const formData = new FormData(form);
-    const data = {
-        name: formData.get('name'),
-        age: formData.get('age'),
-        phone: formData.get('phone'),
-        organization: formData.get('organization'),
-        occupation: formData.get('occupation'),
-        project: formData.get('project'),
-        groupSelection: formData.get('groupSelection'),
-        sexualExperience: formData.get('sexualExperience') === 'true',
-        cervicalCancerScreening: formData.get('cervicalCancerScreening') === 'true',
-        hpv_result: formData.get('hpv_result'),
-        tct_result: formData.get('tct_result'),
-        biopsy_result: formData.get('biopsy_result'),
-        remark: formData.get('remark')
-    };
-
-    fetch('/lsd/api/surveys/create/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.code === 0) {
-            window.location.reload();
-        } else {
-            alert(data.message || '添加失败');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('添加失败');
-    });
-}
-
 function viewSurvey(id, name, age, phone, organization, occupation, project, groupSelection, sexualExperience, cervicalCancerScreening, hpvResult, tctResult, biopsyResult, remark) {
     // 重置所有标签的样式
     const labels = [
@@ -309,6 +270,11 @@ function viewSurvey(id, name, age, phone, organization, occupation, project, gro
             document.getElementById(field.labelId).classList.add('text-danger');
         }
     });
+
+    // 检查年龄是否小于25或为空
+    if (!age || parseInt(age) < 25) {
+        document.getElementById('ageLabel').classList.add('text-danger');
+    }
     
     // 设置编辑链接
     document.getElementById('editSurveyLink').href = `/lsd/surveys/${id}/edit/`;

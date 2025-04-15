@@ -216,40 +216,37 @@ def update_survey(request, survey_id):
 
 @login_required
 def survey_list(request):
-    # 获取用户所属机构
-    try:
-        user_profile = request.user.profile
-        organization = user_profile.organization if user_profile and user_profile.organization else None
-        organization_name = organization.name if organization else None
-        organization_code = organization.code if organization else None
-    except UserProfile.DoesNotExist:
-        organization = None
-        organization_name = None
-        organization_code = None
-
-    logger.info(f'organization: {organization}')
-
     # 检查用户是否属于lsd组
     is_lsd_user = request.user.groups.filter(name='lsd').exists()
-
-    logger.info(f'is_lsd_user: {is_lsd_user}')
-
     if not is_lsd_user:
         messages.error(request, '您没有权限查看问卷列表')
         return redirect('lsd:index')
+
+    is_admin = request.user.is_staff or request.user.is_superuser
+    if not is_admin:
+        # 获取普通用户所属机构
+        try:
+            user_profile = request.user.profile
+            organization = user_profile.organization if user_profile and user_profile.organization else None
+        except UserProfile.DoesNotExist:
+            organization = None
+
+        if not organization:
+            messages.error(request, '您未关联任何机构，请联系管理员进行关联')
+            return redirect('lsd:index')
+    else:
+        organization = None
 
     # 获取搜索参数
     search_query = request.GET.get('q', '')
 
     # 获取问卷列表
-    if is_lsd_user:
+    if is_admin:
         # lsd组用户可以查看所有问卷
         surveys = LsdSurvey.objects.all()
     else:
         # 普通用户只能查看自己机构的问卷
-        surveys = LsdSurvey.objects.filter(organization=organization_code)
-
-    logger.info(f'surveys: {surveys}')
+        surveys = LsdSurvey.objects.filter(organization=organization.code)
 
     # 如果有搜索参数，添加过滤条件
     if search_query:
@@ -272,8 +269,6 @@ def survey_list(request):
         'page_obj': page_obj,
         'is_paginated': paginator.num_pages > 1,
         'organization': organization,
-        'organization_name': organization_name,
-        'organization_code': organization_code,
         'is_lsd_user': is_lsd_user
     })
 

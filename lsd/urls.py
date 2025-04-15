@@ -22,4 +22,5 @@ urlpatterns = [
     # 微信小程序API
     path('api/weapp/surveys/', weapp_views.list_surveys, name='list_surveys_weapp'),
     path('api/weapp/surveys/create/', weapp_views.create_survey, name='create_survey_weapp'),
+    path('api/weapp/organizations/', weapp_views.list_organizations, name='list_organizations_weapp'),
 ]

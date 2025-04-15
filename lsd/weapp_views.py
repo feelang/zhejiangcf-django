@@ -87,3 +87,27 @@ def list_surveys(request):
             'code': 500,
             'message': str(e)
         }, status=500) 
+
+@require_http_methods(["GET"])
+def list_organizations(request):
+    try:
+        # 从请求头获取微信云托管注入的openid
+        openId = request.headers.get('X-WX-OPENID') or request.headers.get('X-WX-FROM-OPENID')
+        if not openId:
+            return JsonResponse({
+                'code': 401,
+                'message': '未授权访问'
+            }, status=401)
+
+        # 查询所有的组织名称
+        organizations = LsdSurvey.objects.values('organization').distinct()
+        return JsonResponse({
+            'code': 0,
+            'message': '查询成功',
+            'data': [org['organization'] for org in organizations]
+        })
+    except Exception as e:
+        return JsonResponse({
+            'code': 500,
+            'message': str(e)
+        })

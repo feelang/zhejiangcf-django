@@ -9,5 +9,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
     path('lsd/', include('lsd.urls')),
-    path('survey/', include('lungsurvey.urls')),
+    path('lungsurvey/', include('lungsurvey.urls')),
 ]

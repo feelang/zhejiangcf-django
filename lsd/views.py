@@ -24,56 +24,6 @@ logger = logging.getLogger('log')
 def index(request):
     return render(request, 'lsd/index.html')
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def create_survey_weapp(request):
-    try:
-        data = json.loads(request.body)
-
-        # 从请求头获取微信云托管注入的openid
-        openid = request.headers.get('X-WX-OPENID') or request.headers.get('X-WX-FROM-OPENID')
-        logger.info(f'openid: {openid}')  # Add this line for debuggin
-        if not openid:
-            return JsonResponse({
-                'code': 401,
-                'message': '未授权访问'
-            }, status=401)
-
-        # 创建新的调查记录
-        survey = LsdSurvey(
-            _openId=openid,
-            name=data.get('name'),
-            age=data.get('age'),
-            phone=data.get('phone'),
-            organization=data.get('organization'),
-            occupation=data.get('occupation'),
-            project=data.get('project'),
-            groupSelection=data.get('groupSelection'),
-            sexualExperience=data.get('sexualExperience'),
-            cervicalCancerScreening=data.get('cervicalCancerScreening')
-        )
-
-        # 保存到数据库
-        survey.save()
-
-        return JsonResponse({
-            'code': 0,
-            'message': '提交成功',
-            'data': {
-                'id': survey.id
-            }
-        })
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'code': 400,
-            'message': '无效的JSON数据'
-        }, status=400)
-    except Exception as e:
-        return JsonResponse({
-            'code': 500,
-            'message': str(e)
-        }, status=500)
-
 @login_required
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -557,32 +507,6 @@ def export_surveys(request):
     filename = f'问卷数据_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
     response['Content-Disposition'] = f'attachment; filename={filename}'
 
-    # 保存工作簿到响应
-    wb.save(response)
-    return response
-
-@login_required
-def download_template(request):
-    # 创建新的工作簿
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    
-    # 设置表头
-    headers = ['姓名', '年龄', '手机号', '职业', '群体选择']
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=header)
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center')
-    
-    # 设置列宽
-    for col in range(1, len(headers) + 1):
-        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 15
-    
-    # 创建响应
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=问卷导入模板.xlsx'
-    
     # 保存工作簿到响应
     wb.save(response)
     return response

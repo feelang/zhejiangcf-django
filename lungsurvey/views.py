@@ -9,4 +9,13 @@ from django.core.serializers import serialize
 
 @login_required
 def index(request):
-    return render(request, 'lungsurvey/index.html')
+    try:
+        organization = request.user.profile.organization.name if hasattr(request.user, 'profile') and request.user.profile.organization else "未设置"
+    except:
+        organization = "未设置"
+        
+    context = {
+        'username': request.user.username,
+        'organization': organization
+    }
+    return render(request, 'lungsurvey/index.html', context)

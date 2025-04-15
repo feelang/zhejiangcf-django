@@ -3,7 +3,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import LsdSurvey
+from .models import LsdOrganization, LsdSurvey
 
 logger = logging.getLogger('log')
 
@@ -100,14 +100,14 @@ def list_organizations(request):
             }, status=401)
 
         # 查询所有的组织名称
-        organizations = LsdSurvey.objects.values('organization').distinct()
+        organizations = LsdOrganization.objects.all()
         return JsonResponse({
             'code': 0,
             'message': '查询成功',
-            'data': [org['organization'] for org in organizations]
-        })
+            'data': [{"name": org.name, "code": org.code} for org in organizations],
+        }, status=200)
     except Exception as e:
         return JsonResponse({
             'code': 500,
             'message': str(e)
-        })
+        }, status=500)

@@ -27,7 +27,15 @@ def create_survey(request):
         
         # 验证 groupSelection 是否为有效的数组下标
         group_selection_index = data.get('groupSelection')
-        if not isinstance(group_selection_index, int) or group_selection_index < 0 or group_selection_index >= len(GROUP_SELECTION_LIST):
+        try:
+            group_selection_index = int(group_selection_index)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'code': 400,
+                'message': '无效的群体选择'
+            }, status=400)
+            
+        if group_selection_index < 0 or group_selection_index >= len(GROUP_SELECTION_LIST):
             return JsonResponse({
                 'code': 400,
                 'message': '无效的群体选择'
@@ -36,8 +44,15 @@ def create_survey(request):
         # 验证 sexualExperience 和 cervicalCancerScreening 是否为 0 或 1
         sexual_experience = data.get('sexualExperience')
         cervical_screening = data.get('cervicalCancerScreening')
-        if not isinstance(sexual_experience, int) or sexual_experience not in [0, 1] or \
-           not isinstance(cervical_screening, int) or cervical_screening not in [0, 1]:
+        try:
+            sexual_experience = int(sexual_experience)
+            cervical_screening = int(cervical_screening)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'code': 400,
+                'message': 'sexualExperience 和 cervicalCancerScreening 必须为 0 或 1'
+            }, status=400)
+        if sexual_experience not in [0, 1] or cervical_screening not in [0, 1]:
             return JsonResponse({
                 'code': 400,
                 'message': 'sexualExperience 和 cervicalCancerScreening 必须为 0 或 1'

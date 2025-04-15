@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('surveys/', views.survey_list, name='survey_list'),
     path('surveys/create/', views.create_survey_page, name='create_survey_page'),
+    path('surveys/<int:survey_id>/edit/', views.edit_survey_page, name='edit_survey_page'),
     path('surveys/import/', views.import_surveys, name='import_surveys'),
     path('surveys/<int:survey_id>/update/', views.update_survey, name='update_survey'),
     path('surveys/<int:survey_id>/delete/', views.delete_survey, name='delete_survey'),

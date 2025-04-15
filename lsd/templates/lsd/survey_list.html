@@ -50,7 +50,7 @@
                 <td class="{% if not survey.group_selection %}text-danger{% endif %}">{{ survey.group_selection|default:"未填写" }}</td>
                 <td>{{ survey.updated_at|date:"Y-m-d" }}</td>
                 <td>
-                    <a href="{% url 'lsd:update_survey' survey.id %}" class="btn btn-sm btn-primary">编辑</a>
+                    <a href="{% url 'lsd:edit_survey_page' survey.id %}" target="_blank" class="btn btn-sm btn-primary">编辑</a>
                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ survey.id }}">
                         删除
                     </button>

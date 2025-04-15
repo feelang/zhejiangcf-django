@@ -585,3 +585,14 @@ def download_template(request):
     # 保存工作簿到响应
     wb.save(response)
     return response
+
+@login_required
+def edit_survey_page(request, survey_id):
+    try:
+        survey = LsdSurvey.objects.get(id=survey_id)
+        return render(request, 'lsd/edit_survey.html', {
+            'survey': survey
+        })
+    except LsdSurvey.DoesNotExist:
+        messages.error(request, '问卷不存在')
+        return redirect('lsd:survey_list')

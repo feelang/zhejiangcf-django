@@ -1,0 +1,223 @@
+{% extends 'lsd/base.html' %}
+
+{% block lsd_content %}
+<div class="container mb-5">
+    <h2 class="mb-4">编辑问卷</h2>
+
+    <form id="editForm" class="needs-validation" novalidate>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="name" class="form-label">姓名 <span class="text-danger">*</span></label>
+            </div>
+            <div class="col-md-9">
+                <input type="text" class="form-control" id="name" name="name" value="{{ survey.name }}" required>
+                <div class="invalid-feedback">请输入姓名</div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="age" class="form-label">年龄 <span class="text-danger">*</span></label>
+            </div>
+            <div class="col-md-9">
+                <input type="number" class="form-control" id="age" name="age" value="{{ survey.age }}" required>
+                <div class="invalid-feedback">请输入年龄</div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="phone" class="form-label">手机号码 <span class="text-danger">*</span></label>
+            </div>
+            <div class="col-md-9">
+                <input type="tel" class="form-control" id="phone" name="phone" value="{{ survey.phone }}" pattern="^1[3-9]\d{9}$" required>
+                <div class="invalid-feedback">请输入正确的手机号码</div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="organization" class="form-label">单位</label>
+            </div>
+            <div class="col-md-9">
+                <input type="text" class="form-control" id="organization" name="organization" value="{{ survey.organization }}" readonly>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="occupation" class="form-label">职业</label>
+            </div>
+            <div class="col-md-9">
+                <input type="text" class="form-control" id="occupation" name="occupation" value="{{ survey.occupation }}">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="project" class="form-label">项目</label>
+            </div>
+            <div class="col-md-9">
+                <input type="text" class="form-control" id="project" name="project" value="{{ survey.project }}">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="groupSelection" class="form-label">分组选择</label>
+            </div>
+            <div class="col-md-9">
+                <select class="form-select" id="groupSelection" name="groupSelection">
+                    <option value="">请选择</option>
+                    <option value="普通人群" {% if survey.groupSelection == "普通人群" %}selected{% endif %}>普通人群</option>
+                    <option value="高危人群" {% if survey.groupSelection == "高危人群" %}selected{% endif %}>高危人群</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="sexualExperience" class="form-label">性经历</label>
+            </div>
+            <div class="col-md-9">
+                <select class="form-select" id="sexualExperience" name="sexualExperience">
+                    <option value="true" {% if survey.sexualExperience %}selected{% endif %}>是</option>
+                    <option value="false" {% if not survey.sexualExperience %}selected{% endif %}>否</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="cervicalCancerScreening" class="form-label">宫颈癌筛查</label>
+            </div>
+            <div class="col-md-9">
+                <select class="form-select" id="cervicalCancerScreening" name="cervicalCancerScreening">
+                    <option value="true" {% if survey.cervicalCancerScreening %}selected{% endif %}>是</option>
+                    <option value="false" {% if not survey.cervicalCancerScreening %}selected{% endif %}>否</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="hpv_result" class="form-label">HPV结果</label>
+            </div>
+            <div class="col-md-9">
+                <select class="form-select" id="hpv_result" name="hpv_result">
+                    <option value="">请选择</option>
+                    <option value="未做" {% if survey.hpv_result == "未做" %}selected{% endif %}>未做</option>
+                    <option value="阴性" {% if survey.hpv_result == "阴性" %}selected{% endif %}>阴性</option>
+                    <option value="阳性" {% if survey.hpv_result == "阳性" %}selected{% endif %}>阳性</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="tct_result" class="form-label">TCT结果</label>
+            </div>
+            <div class="col-md-9">
+                <select class="form-select" id="tct_result" name="tct_result">
+                    <option value="">请选择</option>
+                    <option value="未做" {% if survey.tct_result == "未做" %}selected{% endif %}>未做</option>
+                    <option value="霉菌感染、滴虫感染" {% if survey.tct_result == "霉菌感染、滴虫感染" %}selected{% endif %}>霉菌感染、滴虫感染</option>
+                    <option value="NILM" {% if survey.tct_result == "NILM" %}selected{% endif %}>NILM</option>
+                    <option value="ASC-US" {% if survey.tct_result == "ASC-US" %}selected{% endif %}>ASC-US</option>
+                    <option value="ASC-H" {% if survey.tct_result == "ASC-H" %}selected{% endif %}>ASC-H</option>
+                    <option value="LSIL" {% if survey.tct_result == "LSIL" %}selected{% endif %}>LSIL</option>
+                    <option value="HSIL" {% if survey.tct_result == "HSIL" %}selected{% endif %}>HSIL</option>
+                    <option value="AGC" {% if survey.tct_result == "AGC" %}selected{% endif %}>AGC</option>
+                    <option value="SCC" {% if survey.tct_result == "SCC" %}selected{% endif %}>SCC</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="biopsy_result" class="form-label">活检结果</label>
+            </div>
+            <div class="col-md-9">
+                <textarea class="form-control" id="biopsy_result" name="biopsy_result" rows="3">{{ survey.biopsy_result }}</textarea>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="remark" class="form-label">备注</label>
+            </div>
+            <div class="col-md-9">
+                <textarea class="form-control" id="remark" name="remark" rows="3">{{ survey.remark }}</textarea>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-9 offset-md-3">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'lsd:survey_list' %}'">返回</button>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        name: formData.get('name'),
+        age: formData.get('age'),
+        phone: formData.get('phone'),
+        organization: formData.get('organization'),
+        occupation: formData.get('occupation'),
+        project: formData.get('project'),
+        groupSelection: formData.get('groupSelection'),
+        sexualExperience: formData.get('sexualExperience') === 'true',
+        cervicalCancerScreening: formData.get('cervicalCancerScreening') === 'true',
+        hpv_result: formData.get('hpv_result'),
+        tct_result: formData.get('tct_result'),
+        biopsy_result: formData.get('biopsy_result'),
+        remark: formData.get('remark')
+    };
+
+    fetch(`/lsd/api/surveys/{{ survey.id }}/update/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            window.location.href = '{% url "lsd:survey_list" %}';
+        } else {
+            alert(data.message || '更新失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('更新失败');
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

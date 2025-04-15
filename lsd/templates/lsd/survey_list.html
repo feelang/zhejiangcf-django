@@ -2,9 +2,9 @@
 {% load custom_filters %}
 
 {% block lsd_content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">问卷列表</h1>
-    <span>机构：<strong>{{ organization_name }}</strong></span>
+<div class="d-flex align-items-end mb-4">
+    <h1 class="h2 mb-0 me-3">问卷列表</h1>
+    <span class="badge bg-light text-primary">{{ organization_name }}</span>
 </div>
 
 <!-- 搜索和导入区域 -->
@@ -31,52 +31,35 @@
             <tr>
                 <th>姓名</th>
                 <th>手机号</th>
-                <th>年龄</th>
-                <th>群体</th>
                 <th>HPV结果</th>
                 <th>TCT结果</th>
                 <th>活检结果</th>
+                <th>状态</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody>
             {% for survey in page_obj %}
             <tr>
-                <td class="{% if not survey.name %}text-danger{% endif %}">{{ survey.name|default:"未填写" }}</td>
-                <td class="{% if not survey.phone %}text-danger{% endif %}">{{ survey.phone|default:"未填写" }}</td>
-                <td class="{% if not survey.age %}text-danger{% endif %}">{{ survey.age|default:"未填写" }}</td>
-                <td class="{% if not survey.groupSelection %}text-danger{% endif %}">{{ survey.groupSelection|default:"未填写" }}</td>
-                <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"未填写" }}</td>
-                <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"未填写" }}</td>
-                <td class="{% if not survey.biopsy_result %}text-danger{% endif %}">{{ survey.biopsy_result|default:"未填写" }}</td>
+                <td class="{% if not survey.name %}text-danger{% endif %}">{{ survey.name|default:"-" }}</td>
+                <td class="{% if not survey.phone %}text-danger{% endif %}">{{ survey.phone|default:"-" }}</td>
+                <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"-" }}</td>
+                <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"-" }}</td>
+                <td class="{% if not survey.biopsy_result %}text-danger{% endif %}">{{ survey.biopsy_result|default:"-" }}</td>
                 <td>
-                    <a href="{% url 'lsd:edit_survey_page' survey.id %}" target="_blank" class="btn btn-sm btn-primary">编辑</a>
-                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ survey.id }}">
-                        删除
+                    {% if not survey.name or not survey.phone or not survey.age or not survey.organization or not survey.occupation or not survey.project or not survey.groupSelection or survey.sexualExperience is None or survey.cervicalCancerScreening is None or not survey.hpv_result or not survey.tct_result or not survey.biopsy_result %}
+                    <button type="button" class="btn btn-sm text-danger bg-danger bg-opacity-10 me-1" onclick="viewSurvey({{ survey.id }}, '{{ survey.name }}', '{{ survey.age }}', '{{ survey.phone }}', '{{ survey.organization }}', '{{ survey.occupation }}', '{{ survey.project }}', '{{ survey.groupSelection }}', '{{ survey.sexualExperience }}', '{{ survey.cervicalCancerScreening }}', '{{ survey.hpv_result }}', '{{ survey.tct_result }}', '{{ survey.biopsy_result }}', '{{ survey.remark }}')" title="查看"><i class="bi bi-exclamation-circle"></i></button>
+                    {% else %}
+                    <button type="button" class="btn btn-sm text-success bg-success bg-opacity-10 me-1" onclick="viewSurvey({{ survey.id }}, '{{ survey.name }}', '{{ survey.age }}', '{{ survey.phone }}', '{{ survey.organization }}', '{{ survey.occupation }}', '{{ survey.project }}', '{{ survey.groupSelection }}', '{{ survey.sexualExperience }}', '{{ survey.cervicalCancerScreening }}', '{{ survey.hpv_result }}', '{{ survey.tct_result }}', '{{ survey.biopsy_result }}', '{{ survey.remark }}')" title="查看"><i class="bi bi-check-circle"></i></button>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'lsd:edit_survey_page' survey.id %}" target="_blank" class="btn btn-sm btn-primary me-1"><i class="bi bi-pencil"></i></a>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ survey.id }}, '{{ survey.name }}')">
+                        <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>
-            <!-- 删除确认模态框 -->
-            <div class="modal fade" id="deleteModal{{ survey.id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">确认删除</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            确定要删除 {{ survey.name }} 的问卷记录吗？
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                            <form method="post" action="{% url 'lsd:delete_survey' survey.id %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger">确认删除</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
             {% empty %}
             <tr>
                 <td colspan="8" class="text-center">暂无问卷记录</td>
@@ -110,6 +93,49 @@
     </ul>
 </nav>
 {% endif %}
+
+<!-- 查看问卷详情模态框 -->
+<div class="modal fade" id="viewSurveyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">问卷详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong id="nameLabel">姓名：</strong><span id="viewName"></span></p>
+                        <p><strong id="ageLabel">年龄：</strong><span id="viewAge"></span></p>
+                        <p><strong id="phoneLabel">手机号：</strong><span id="viewPhone"></span></p>
+                        <p><strong id="organizationLabel">组织：</strong><span id="viewOrganization"></span></p>
+                        <p><strong id="occupationLabel">职业：</strong><span id="viewOccupation"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong id="projectLabel">项目：</strong><span id="viewProject"></span></p>
+                        <p><strong id="groupSelectionLabel">分组：</strong><span id="viewGroupSelection"></span></p>
+                        <p><strong id="sexualExperienceLabel">性经历：</strong><span id="viewSexualExperience"></span></p>
+                        <p><strong id="cervicalCancerScreeningLabel">宫颈癌筛查：</strong><span id="viewCervicalCancerScreening"></span></p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <p><strong id="hpvResultLabel">HPV结果：</strong><span id="viewHpvResult"></span></p>
+                        <p><strong id="tctResultLabel">TCT结果：</strong><span id="viewTctResult"></span></p>
+                        <p><strong id="biopsyResultLabel">活检结果：</strong><span id="viewBiopsyResult"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong id="remarkLabel">备注：</strong><span id="viewRemark"></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a id="editSurveyLink" href="#" class="btn btn-primary">编辑</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -178,28 +204,33 @@ function getCookie(name) {
     return cookieValue;
 }
 
-function deleteSurvey(surveyId) {
-    if (confirm('确定要删除这条记录吗？此操作不可撤销。')) {
-        fetch(`/lsd/api/surveys/${surveyId}/delete/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code === 0) {
-                window.location.reload();
-            } else {
-                alert(data.message || '删除失败');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('删除失败');
-        });
+function confirmDelete(surveyId, surveyName) {
+    if (confirm(`确定要删除 ${surveyName} 的问卷记录吗？此操作不可撤销。`)) {
+        deleteSurvey(surveyId);
     }
+}
+
+function deleteSurvey(surveyId) {
+    fetch(`/lsd/api/surveys/${surveyId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 0) {
+            // 删除成功后刷新页面
+            window.location.reload();
+        } else {
+            alert(data.message || '删除失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('删除失败');
+    });
 }
 
 function addSurvey() {
@@ -241,6 +272,50 @@ function addSurvey() {
         console.error('Error:', error);
         alert('添加失败');
     });
+}
+
+function viewSurvey(id, name, age, phone, organization, occupation, project, groupSelection, sexualExperience, cervicalCancerScreening, hpvResult, tctResult, biopsyResult, remark) {
+    // 重置所有标签的样式
+    const labels = [
+        'nameLabel', 'ageLabel', 'phoneLabel', 'organizationLabel', 'occupationLabel',
+        'projectLabel', 'groupSelectionLabel', 'sexualExperienceLabel', 'cervicalCancerScreeningLabel',
+        'hpvResultLabel', 'tctResultLabel', 'biopsyResultLabel', 'remarkLabel'
+    ];
+    labels.forEach(labelId => {
+        document.getElementById(labelId).classList.remove('text-danger');
+    });
+
+    // 设置字段值并更新标签样式
+    const fields = [
+        { id: 'viewName', value: name, labelId: 'nameLabel' },
+        { id: 'viewAge', value: age, labelId: 'ageLabel' },
+        { id: 'viewPhone', value: phone, labelId: 'phoneLabel' },
+        { id: 'viewOrganization', value: organization, labelId: 'organizationLabel' },
+        { id: 'viewOccupation', value: occupation, labelId: 'occupationLabel' },
+        { id: 'viewProject', value: project, labelId: 'projectLabel' },
+        { id: 'viewGroupSelection', value: groupSelection, labelId: 'groupSelectionLabel' },
+        { id: 'viewSexualExperience', value: sexualExperience, labelId: 'sexualExperienceLabel' },
+        { id: 'viewCervicalCancerScreening', value: cervicalCancerScreening, labelId: 'cervicalCancerScreeningLabel' },
+        { id: 'viewHpvResult', value: hpvResult, labelId: 'hpvResultLabel' },
+        { id: 'viewTctResult', value: tctResult, labelId: 'tctResultLabel' },
+        { id: 'viewBiopsyResult', value: biopsyResult, labelId: 'biopsyResultLabel' },
+        { id: 'viewRemark', value: remark, labelId: 'remarkLabel' }
+    ];
+
+    fields.forEach(field => {
+        const value = field.value || '未填写';
+        document.getElementById(field.id).textContent = value;
+        if (!field.value) {
+            document.getElementById(field.labelId).classList.add('text-danger');
+        }
+    });
+    
+    // 设置编辑链接
+    document.getElementById('editSurveyLink').href = `/lsd/surveys/${id}/edit/`;
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('viewSurveyModal'));
+    modal.show();
 }
 </script>
 {% endblock %}

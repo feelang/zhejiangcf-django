@@ -19,7 +19,7 @@ logger = logging.getLogger('log')
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def submit_survey(request):
+def create_survey_weapp(request):
     try:
         data = json.loads(request.body)
 
@@ -67,8 +67,65 @@ def submit_survey(request):
             'message': str(e)
         }, status=500)
 
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_survey(request):
+    try:
+        data = json.loads(request.body)
+        
+        # 获取用户所属机构
+        try:
+            user_profile = request.user.profile
+            organization = user_profile.organization if user_profile and user_profile.organization else None
+            organization_code = organization.code if organization else None
+        except UserProfile.DoesNotExist:
+            return JsonResponse({
+                'code': 403,
+                'message': '用户未关联机构信息'
+            }, status=403)
+
+        # 创建新的调查记录
+        survey = LsdSurvey(
+            _openId=f"web_{request.user.id}",
+            name=data.get('name'),
+            age=data.get('age'),
+            phone=data.get('phone'),
+            organization=organization_code,
+            occupation=data.get('occupation'),
+            project=data.get('project'),
+            groupSelection=data.get('groupSelection'),
+            sexualExperience=data.get('sexualExperience'),
+            cervicalCancerScreening=data.get('cervicalCancerScreening'),
+            hpv_result=data.get('hpv_result'),
+            tct_result=data.get('tct_result'),
+            biopsy_result=data.get('biopsy_result'),
+            remark=data.get('remark')
+        )
+
+        # 保存到数据库
+        survey.save()
+
+        return JsonResponse({
+            'code': 0,
+            'message': '添加成功',
+            'data': {
+                'id': survey.id
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'code': 400,
+            'message': '无效的JSON数据'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'code': 500,
+            'message': str(e)
+        }, status=500)
+
 @require_http_methods(["GET"])
-def get_surveys(request):
+def list_surveys_weapp(request):
     try:
         # 从请求头获取微信云托管注入的openid
         openId = request.headers.get('X-WX-OPENID') or request.headers.get('X-WX-FROM-OPENID')
@@ -151,7 +208,7 @@ def update_survey(request, survey_id):
         }, status=500)
 
 @login_required
-def survey_list(request):
+def list_surveys(request):
     # 获取用户所属机构
     try:
         user_profile = request.user.profile
@@ -201,7 +258,7 @@ def survey_list(request):
     
     # 分页
     page = request.GET.get('page', 1)
-    paginator = Paginator(surveys, 10)  
+    paginator = Paginator(surveys, 10)  # 每页显示10条记录
     
     try:
         page_obj = paginator.page(page)
@@ -379,3 +436,20 @@ def delete_survey(request, survey_id):
             'code': 500,
             'message': str(e)
         }, status=500)
+
+@login_required
+def create_survey_page(request):
+    # 获取用户所属机构
+    try:
+        user_profile = request.user.profile
+        organization = user_profile.organization if user_profile and user_profile.organization else None
+    except UserProfile.DoesNotExist:
+        organization = None
+
+    if not organization:
+        messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
+        return redirect('lsd:list_surveys')
+
+    return render(request, 'lsd/create_survey.html', {
+        'organization': organization
+    })

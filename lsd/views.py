@@ -273,14 +273,20 @@ def import_surveys(request):
                     # 获取行数据
                     row_data = {col: str(row[idx-1].value).strip() if row[idx-1].value is not None else '' for col, idx in column_indices.items()}
 
+                    name = str(row_data['姓名']).strip()
+                    phone = str(row_data['电话']).strip()
+
                     # 检查姓名和电话是否为空
-                    if not row_data['姓名'] or not row_data['电话']:
+                    if not name and not phone:
                         skipped_count += 1
                         logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
                         continue
 
+                    if not name:
+                        name = ''
+                    
                     # 处理并验证手机号
-                    phone = str(row_data['电话']).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
+                    phone = str(phone).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
                     is_valid_phone = bool(re.match(r'^1[3-9]\d{9}$', phone))  # 验证中国大陆手机号格式
 
                     if not is_valid_phone:

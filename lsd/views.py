@@ -165,6 +165,23 @@ def update_survey(request, survey_id):
             'message': str(e)
         }, status=500)
 
+def is_survey_complete(survey):
+    """检查调查数据是否完整"""
+    return all([
+        survey.name,
+        survey.phone and re.match(r'^1[3-9]\d{9}$', survey.phone),
+        survey.age and survey.age >= 25,
+        survey.organization,
+        survey.occupation,
+        survey.project,
+        survey.groupSelection,
+        survey.sexualExperience is not None,
+        survey.cervicalCancerScreening is not None,
+        survey.hpv_result,
+        survey.tct_result,
+        survey.biopsy_result
+    ])
+
 @login_required
 def survey_list(request):
     # 检查用户是否属于lsd组
@@ -215,6 +232,10 @@ def survey_list(request):
     paginator = Paginator(surveys, 10)  # 每页显示10条记录
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # 为每个调查添加完整性标记
+    for survey in page_obj:
+        survey.is_complete = is_survey_complete(survey)
 
     return render(request, 'lsd/survey_list.html', {
         'page_obj': page_obj,

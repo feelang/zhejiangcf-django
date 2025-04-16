@@ -110,11 +110,11 @@
             <div class="col-md-9">
                 <select class="form-select" id="hpv_result" name="hpv_result">
                     <option value="">请选择</option>
-                    <option value="阴性">阴性</option>
-                    <option value="16型+">16型+</option>
-                    <option value="18/45型+">18/45型+</option>
-                    <option value="16型+ 18/45型+">16型+ 18/45型+</option>
-                    <option value="其余11型+">其余11型+</option>
+                    <option value="阴性" {% if survey.hpv_result == "阴性" %}selected{% endif %}>阴性</option>
+                    <option value="16型+" {% if survey.hpv_result == "16型+" %}selected{% endif %}>16型+</option>
+                    <option value="18/45型+" {% if survey.hpv_result == "18/45型+" %}selected{% endif %}>18/45型+</option>
+                    <option value="16型+ 18/45型+" {% if survey.hpv_result == "16型+ 18/45型+" %}selected{% endif %}>16型+ 18/45型+</option>
+                    <option value="其余11型+" {% if survey.hpv_result == "其余11型+" %}selected{% endif %}>其余11型+</option>
                 </select>
             </div>
         </div>

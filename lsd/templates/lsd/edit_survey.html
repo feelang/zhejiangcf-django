@@ -169,6 +169,12 @@
 
 {% block extra_js %}
 <script>
+// Function to validate phone number
+function validatePhone(phone) {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    return phoneRegex.test(phone);
+}
+
 // Function to check field values and update label colors
 function updateLabelColors() {
     const form = document.getElementById('editForm');
@@ -184,6 +190,15 @@ function updateLabelColors() {
                     label.classList.add('text-danger');
                 } else {
                     label.classList.remove('text-danger');
+                }
+            } else if (field.id === 'phone') {
+                // Special handling for phone field
+                if (field.value === '' || !validatePhone(field.value)) {
+                    label.classList.add('text-danger');
+                    field.classList.add('is-invalid');
+                } else {
+                    label.classList.remove('text-danger');
+                    field.classList.remove('is-invalid');
                 }
             } else {
                 // Normal handling for other fields
@@ -204,6 +219,12 @@ document.addEventListener('DOMContentLoaded', updateLabelColors);
 document.getElementById('editForm').addEventListener('submit', function(e) {
     e.preventDefault();
     updateLabelColors();
+    
+    const phone = document.getElementById('phone').value;
+    if (!validatePhone(phone)) {
+        document.getElementById('phone').classList.add('is-invalid');
+        return;
+    }
     
     const formData = new FormData(this);
     const data = {
@@ -265,4 +286,4 @@ function getCookie(name) {
     return cookieValue;
 }
 </script>
-{% endblock %} 
+{% endblock %}

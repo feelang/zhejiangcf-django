@@ -2,7 +2,7 @@
 
 {% block lsd_content %}
 <div class="container mb-5 mt-5">
-    <h2 class="mb-4">编辑问卷</h2>
+    <h2 class="mb-4">编辑数据</h2>
 
     <form id="editForm" class="needs-validation" novalidate>
         <div class="row mb-3">
@@ -37,7 +37,7 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="organization" class="form-label">机构</label>
+                <label for="organization" class="form-label">筛查医院</label>
             </div>
             <div class="col-md-9">
                 <input type="text" class="form-control" id="organization" name="organization" value="{{ survey.organization }}" readonly>
@@ -55,7 +55,7 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="project" class="form-label">项目</label>
+                <label for="project" class="form-label">本次活动</label>
             </div>
             <div class="col-md-9">
                 <input type="text" class="form-control" id="project" name="project" value="{{ survey.project }}">
@@ -105,21 +105,23 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="hpv_result" class="form-label">HPV结果</label>
+                <label for="hpv_result" class="form-label">本次活动-HPV结果</label>
             </div>
             <div class="col-md-9">
                 <select class="form-select" id="hpv_result" name="hpv_result">
                     <option value="">请选择</option>
-                    <option value="未做" {% if survey.hpv_result == "未做" %}selected{% endif %}>未做</option>
-                    <option value="阴性" {% if survey.hpv_result == "阴性" %}selected{% endif %}>阴性</option>
-                    <option value="阳性" {% if survey.hpv_result == "阳性" %}selected{% endif %}>阳性</option>
+                    <option value="阴性">阴性</option>
+                    <option value="16型+">16型+</option>
+                    <option value="18/45型+">18/45型+</option>
+                    <option value="16型+ 18/45型+">16型+ 18/45型+</option>
+                    <option value="其余11型+">其余11型+</option>
                 </select>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="tct_result" class="form-label">TCT结果</label>
+                <label for="tct_result" class="form-label">本次活动-TCT结果</label>
             </div>
             <div class="col-md-9">
                 <select class="form-select" id="tct_result" name="tct_result">

@@ -4,8 +4,8 @@
 {% block lsd_content %}
 <div class="container mt-5">
 <div class="d-flex align-items-end mb-4">
-    <h1 class="h2 mb-0 me-3">问卷列表</h1>
-    <span class="badge bg-light text-primary">{{ organization_name }}</span>
+    <h1 class="h2 mb-0 me-3">数据列表</h1>
+    <span class="badge bg-light text-primary">{{ organization_name | default:"-" }} ({{ organization_code | default:"-"}})</span>
 </div>
 
 <!-- 搜索和导入区域 -->
@@ -25,17 +25,22 @@
     </div>
 </div>
 
-<!-- 问卷列表 -->
+<!-- 数据统计 -->
+<div class="mb-3">
+    <span class="text-muted">共 {{ page_obj.paginator.count }} 条记录</span>
+</div>
+
+<!-- 数据列表 -->
 <div class="table-responsive">
     <table class="table table-striped table-hover">
         <thead>
             <tr>
                 <th>姓名</th>
+                <th>年龄</th>
                 <th>手机号</th>
-                <th>HPV结果</th>
-                <th>TCT结果</th>
+                <th>HPV结果（本次活动）</th>
+                <th>TCT结果（本次活动）</th>
                 <th>活检结果</th>
-                <th>机构代码</th>
                 <th>状态</th>
                 <th>操作</th>
             </tr>
@@ -44,11 +49,11 @@
             {% for survey in page_obj %}
             <tr>
                 <td class="{% if not survey.name %}text-danger{% endif %}">{{ survey.name|default:"-" }}</td>
+                <td class="{% if not survey.age %}text-danger{% endif %}">{{ survey.age|default:"-" }}</td>
                 <td class="{% if not survey.phone %}text-danger{% endif %}">{{ survey.phone|default:"-" }}</td>
                 <td class="{% if not survey.hpv_result %}text-danger{% endif %}">{{ survey.hpv_result|default:"-" }}</td>
                 <td class="{% if not survey.tct_result %}text-danger{% endif %}">{{ survey.tct_result|default:"-" }}</td>
                 <td class="{% if not survey.biopsy_result %}text-danger{% endif %}">{{ survey.biopsy_result|default:"-" }}</td>
-                <td>{{ survey.organization|default:"-" }}</td>
                 <td>
                     {% if not survey.name or not survey.phone or not survey.age or survey.age < 25 or not survey.organization or not survey.occupation or not survey.project or not survey.groupSelection or survey.sexualExperience is None or survey.cervicalCancerScreening is None or not survey.hpv_result or not survey.tct_result or not survey.biopsy_result %}
                     <button type="button" class="btn btn-sm text-danger bg-danger bg-opacity-10 me-1" onclick="viewSurvey({{ survey.id }}, '{{ survey.name }}', '{{ survey.age }}', '{{ survey.phone }}', '{{ survey.organization }}', '{{ survey.occupation }}', '{{ survey.project }}', '{{ survey.groupSelection }}', '{{ survey.sexualExperience }}', '{{ survey.cervicalCancerScreening }}', '{{ survey.hpv_result }}', '{{ survey.tct_result }}', '{{ survey.biopsy_result }}', '{{ survey.remark }}')" title="查看"><i class="bi bi-exclamation-circle"></i></button>
@@ -65,7 +70,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center">暂无问卷记录</td>
+                <td colspan="8" class="text-center">暂无记录</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -97,12 +102,12 @@
 </nav>
 {% endif %}
 
-<!-- 查看问卷详情模态框 -->
+<!-- 查看数据详情模态框 -->
 <div class="modal fade" id="viewSurveyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">问卷详情</h5>
+                <h5 class="modal-title">数据详情</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -111,20 +116,20 @@
                         <p><strong id="nameLabel">姓名：</strong><span id="viewName"></span></p>
                         <p><strong id="ageLabel">年龄：</strong><span id="viewAge"></span></p>
                         <p><strong id="phoneLabel">手机号：</strong><span id="viewPhone"></span></p>
-                        <p><strong id="organizationLabel">组织：</strong><span id="viewOrganization"></span></p>
+                        <p><strong id="organizationLabel">医院：</strong><span id="viewOrganization"></span></p>
                         <p><strong id="occupationLabel">职业：</strong><span id="viewOccupation"></span></p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong id="projectLabel">项目：</strong><span id="viewProject"></span></p>
-                        <p><strong id="groupSelectionLabel">分组：</strong><span id="viewGroupSelection"></span></p>
-                        <p><strong id="sexualExperienceLabel">性经历：</strong><span id="viewSexualExperience"></span></p>
-                        <p><strong id="cervicalCancerScreeningLabel">宫颈癌筛查：</strong><span id="viewCervicalCancerScreening"></span></p>
+                        <p><strong id="projectLabel">本次活动：</strong><span id="viewProject"></span></p>
+                        <p><strong id="groupSelectionLabel">群体：</strong><span id="viewGroupSelection"></span></p>
+                        <p><strong id="sexualExperienceLabel">是否有过性生活：</strong><span id="viewSexualExperience"></span></p>
+                        <p><strong id="cervicalCancerScreeningLabel">一年内是否做过宫颈癌筛查：</strong><span id="viewCervicalCancerScreening"></span></p>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <p><strong id="hpvResultLabel">HPV结果：</strong><span id="viewHpvResult"></span></p>
-                        <p><strong id="tctResultLabel">TCT结果：</strong><span id="viewTctResult"></span></p>
+                        <p><strong id="hpvResultLabel">本次活动-HPV结果：</strong><span id="viewHpvResult"></span></p>
+                        <p><strong id="tctResultLabel">本次活动-TCT结果：</strong><span id="viewTctResult"></span></p>
                         <p><strong id="biopsyResultLabel">活检结果：</strong><span id="viewBiopsyResult"></span></p>
                     </div>
                     <div class="col-md-6">
@@ -209,7 +214,7 @@ function getCookie(name) {
 }
 
 function confirmDelete(surveyId, surveyName) {
-    if (confirm(`确定要删除 ${surveyName} 的问卷记录吗？此操作不可撤销。`)) {
+    if (confirm(`确定要删除 ${surveyName} 的数据记录吗？此操作不可撤销。`)) {
         deleteSurvey(surveyId);
     }
 }
@@ -235,6 +240,12 @@ function deleteSurvey(surveyId) {
         console.error('Error:', error);
         alert('删除失败');
     });
+}
+
+function validatePhoneNumber(phone) {
+    // 中国手机号正则表达式：11位数字，以1开头
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    return phoneRegex.test(phone);
 }
 
 function viewSurvey(id, name, age, phone, organization, occupation, project, groupSelection, sexualExperience, cervicalCancerScreening, hpvResult, tctResult, biopsyResult, remark) {
@@ -277,6 +288,11 @@ function viewSurvey(id, name, age, phone, organization, occupation, project, gro
     if (!age || parseInt(age) < 25) {
         document.getElementById('ageLabel').classList.add('text-danger');
     }
+
+    // 检查手机号格式
+    if (phone && !validatePhoneNumber(phone)) {
+        document.getElementById('phoneLabel').classList.add('text-danger');
+    }
     
     // 设置编辑链接
     document.getElementById('editSurveyLink').href = `/lsd/surveys/${id}/edit/`;
@@ -285,5 +301,16 @@ function viewSurvey(id, name, age, phone, organization, occupation, project, gro
     const modal = new bootstrap.Modal(document.getElementById('viewSurveyModal'));
     modal.show();
 }
+
+// 页面加载完成后检查所有手机号
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneCells = document.querySelectorAll('td:nth-child(3)'); // 手机号列
+    phoneCells.forEach(cell => {
+        const phone = cell.textContent.trim();
+        if (phone !== '-' && !validatePhoneNumber(phone)) {
+            cell.classList.add('text-danger');
+        }
+    });
+});
 </script>
 {% endblock %}

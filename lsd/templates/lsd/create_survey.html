@@ -14,7 +14,7 @@
     {% endfor %}
 </div>
 {% endif %}
-    <h2 class="mb-4">创建问卷</h2>
+    <h2 class="mb-4">新增数据</h2>
 
     <form id="createForm" class="needs-validation" novalidate>
         <div class="row mb-3">
@@ -49,11 +49,11 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="organization" class="form-label">机构<span class="text-danger">*</span></label>
+                <label for="organization" class="form-label">筛查医院<span class="text-danger">*</span></label>
             </div>
             <div class="col-md-9">
                 <input type="text" class="form-control" id="organization" name="organization" value="{{ organization.name }}" readonly required>
-                <div class="invalid-feedback">请选择机构</div>
+                <div class="invalid-feedback">请选择筛查医院</div>
             </div>
         </div>
 
@@ -68,7 +68,7 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="project" class="form-label">项目</label>
+                <label for="project" class="form-label">本次活动</label>
             </div>
             <div class="col-md-9">
                 <input type="text" class="form-control" id="project" name="project" value="LSD2025" readonly>
@@ -117,7 +117,7 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="hpv_result" class="form-label">HPV结果</label>
+                <label for="hpv_result" class="form-label">本次活动-HPV结果</label>
             </div>
             <div class="col-md-9">
                 <select class="form-select" id="hpv_result" name="hpv_result">
@@ -133,7 +133,7 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <label for="tct_result" class="form-label">TCT结果</label>
+                <label for="tct_result" class="form-label">本次活动-TCT结果</label>
             </div>
             <div class="col-md-9">
                 <select class="form-select" id="tct_result" name="tct_result">

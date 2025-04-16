@@ -6,21 +6,23 @@
         <!-- 左侧菜单 -->
         <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
             <div class="position-sticky pt-3">
-                <h4 class="sidebar-heading mb-3 px-3" style="color: #2470dc; font-weight: bold;">蓝丝带公益行动</h4>
+                <h3 class="sidebar-heading mb-3 px-3" style="color: #2470dc; font-weight: bold;">
+                    <a href="{% url 'lsd:index' %}" class="text-decoration-none" style="color: inherit;">蓝丝带公益行动</a>
+                </h3>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'survey_list' %}active{% endif %}" href="{% url 'lsd:survey_list' %}">
-                            <i class="bi bi-list-ul me-2"></i>问卷列表
+                            <i class="bi bi-list-ul me-2"></i>数据列表
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'create_survey_page' %}active{% endif %}" href="{% url 'lsd:create_survey_page' %}">
-                            <i class="bi bi-plus-lg me-2"></i>创建问卷
+                            <i class="bi bi-plus-lg me-2"></i>新增数据
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'import_surveys' %}active{% endif %}" href="{% url 'lsd:import_surveys' %}">
-                            <i class="bi bi-upload me-2"></i>导入Excel
+                            <i class="bi bi-upload me-2"></i>导入数据
                         </a>
                     </li>
                     <li class="nav-item">

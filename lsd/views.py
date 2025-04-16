@@ -191,7 +191,7 @@ def survey_list(request):
     # 获取搜索参数
     search_query = request.GET.get('q', '')
 
-    # 获取问卷列表
+    # 获取数据列表
     if is_admin:
         # lsd组用户可以查看所有问卷
         surveys = LsdSurvey.objects.all()

@@ -2,42 +2,11 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- 顶部导航栏 -->
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'lsd:index' %}">蓝丝带公益行动</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarCollapse">
-                <ul class="navbar-nav me-auto mb-2 mb-md-0">
-                    <span>{{organization}}</span>
-                </ul>
-                <div class="d-flex">
-                    <span class="navbar-text text-light me-3">
-                        {% if user.is_authenticated %}
-                            {% if organization %}
-                                {{ organization.name }} ({{ organization.code }}) |
-                            {% endif %}
-                            欢迎，{{ user.username }}
-                        {% else %}
-                            未登录
-                        {% endif %}
-                    </span>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'logout' %}" class="btn btn-outline-light">退出</a>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="btn btn-outline-light">登录</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <div class="row">
         <!-- 左侧菜单 -->
         <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
             <div class="position-sticky pt-3">
+                <h4 class="sidebar-heading mb-3 px-3" style="color: #2470dc; font-weight: bold;">蓝丝带公益行动</h4>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'survey_list' %}active{% endif %}" href="{% url 'lsd:survey_list' %}">
@@ -75,7 +44,7 @@
         </div>
 
         <!-- 右侧内容区域 -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-top: 40px;">
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-top: 56px;">
             {% block lsd_content %}{% endblock %}
         </main>
     </div>
@@ -86,12 +55,23 @@
 <style>
     .sidebar {
         position: fixed;
-        top: 0;
+        top: 56px;  /* Height of the navbar */
         bottom: 0;
         left: 0;
-        z-index: 100;
-        padding: 48px 0 0;
+        z-index: 99;  /* Lower than navbar */
+        padding: 0 0 0;
         box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    }
+
+    /* Add navbar z-index */
+    .navbar {
+        position: relative;
+        z-index: 100;
+    }
+
+    /* Adjust main content margin */
+    main {
+        margin-top: 56px !important;  /* Height of the navbar */
     }
 
     .sidebar .nav-link {
@@ -120,25 +100,6 @@
     .sidebar-heading {
         font-size: .75rem;
         text-transform: uppercase;
-    }
-
-    .navbar-brand {
-        padding-top: .75rem;
-        padding-bottom: .75rem;
-        font-size: 1rem;
-        background-color: rgba(0, 0, 0, .25);
-        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
-    }
-
-    .navbar .navbar-toggler {
-        top: .25rem;
-        right: 1rem;
-    }
-
-    .navbar .form-control {
-        padding: .75rem 1rem;
-        border-width: 0;
-        border-radius: 0;
     }
 
     .form-control-dark {

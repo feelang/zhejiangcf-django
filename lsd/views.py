@@ -233,7 +233,7 @@ def import_surveys(request):
 
     if not organization:
         messages.error(request, '您未关联任何机构，请联系管理员进行关联')
-        return redirect('lsd:survey_list')
+        return redirect('lsd:index')
 
     if request.method == 'POST':
         if 'excel_file' not in request.FILES:
@@ -398,7 +398,7 @@ def create_survey_page(request):
 
     if not organization:
         messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
-        return redirect('lsd:survey_list')
+        return redirect('lsd:index')
 
     return render(request, 'lsd/create_survey.html', {
         'organization': organization

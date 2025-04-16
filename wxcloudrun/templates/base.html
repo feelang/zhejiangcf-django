@@ -24,7 +24,7 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">浙江省癌症基金会筛查管理系统</a>
       <div class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -45,10 +45,8 @@
     </div>
   </nav>
 
-  <div class="container mt-5">
-    {% block content %}
-    {% endblock %}
-  </div>
+  {% block content %}
+  {% endblock %}
 
   <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
   {% block extra_js %}{% endblock %}

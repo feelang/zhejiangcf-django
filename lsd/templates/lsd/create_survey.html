@@ -1,10 +1,10 @@
 {% extends 'lsd/base.html' %}
 
 {% block lsd_content %}
-<div class="container mb-5">
+<div class="container mb-5 mt-5">
     <!-- 消息显示区域 -->
 {% if messages %}
-<div class="mb-4">
+<div class="mb-4 mt-5">
     {% for message in messages %}
     <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show border-0 shadow-sm" role="alert">
         <i class="bi {% if message.tags == 'error' %}bi-exclamation-circle{% else %}bi-check-circle{% endif %} me-2"></i>
@@ -71,7 +71,7 @@
                 <label for="project" class="form-label">项目</label>
             </div>
             <div class="col-md-9">
-                <input type="text" class="form-control" id="project" name="project" value="2025蓝丝带在行动" readonly>
+                <input type="text" class="form-control" id="project" name="project" value="LSD2025" readonly>
             </div>
         </div>
 

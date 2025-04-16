@@ -17,6 +17,7 @@ import re
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from datetime import datetime
+from . import constants
 
 logger = logging.getLogger('log')
 
@@ -39,7 +40,7 @@ def create_survey(request):
         except UserProfile.DoesNotExist:
             return JsonResponse({
                 'code': 403,
-                'message': '用户未关联机构信息'
+                'message': constants.ERROR_USER_NO_ORGANIZATION
             }, status=403)
 
         # 创建新的调查记录
@@ -65,7 +66,7 @@ def create_survey(request):
 
         return JsonResponse({
             'code': 0,
-            'message': '添加成功',
+            'message': constants.SUCCESS_CREATE,
             'data': {
                 'id': survey.id
             }
@@ -73,7 +74,7 @@ def create_survey(request):
     except json.JSONDecodeError:
         return JsonResponse({
             'code': 400,
-            'message': '无效的JSON数据'
+            'message': constants.ERROR_INVALID_JSON
         }, status=400)
     except Exception as e:
         return JsonResponse({
@@ -169,7 +170,7 @@ def survey_list(request):
     # 检查用户是否属于lsd组
     is_lsd_user = request.user.groups.filter(name='lsd').exists()
     if not is_lsd_user:
-        messages.error(request, '您没有权限查看问卷列表')
+        messages.error(request, constants.ERROR_NO_PERMISSION)
         return redirect('lsd:index')
 
     is_admin = request.user.is_staff or request.user.is_superuser
@@ -182,7 +183,7 @@ def survey_list(request):
             organization = None
 
         if not organization:
-            messages.error(request, '您未关联任何机构，请联系管理员进行关联')
+            messages.error(request, constants.ERROR_NO_ORGANIZATION)
             return redirect('lsd:index')
     else:
         organization = None
@@ -232,17 +233,17 @@ def import_surveys(request):
         organization = None
 
     if not organization:
-        messages.error(request, '您未关联任何机构，请联系管理员进行关联')
+        messages.error(request, constants.ERROR_NO_ORGANIZATION)
         return redirect('lsd:index')
 
     if request.method == 'POST':
         if 'excel_file' not in request.FILES:
-            messages.error(request, '请选择要导入的Excel文件')
+            messages.error(request, constants.ERROR_NO_EXCEL_FILE)
             return redirect('lsd:import_surveys')
 
         excel_file = request.FILES['excel_file']
         if not excel_file.name.endswith(('.xls', '.xlsx')):
-            messages.error(request, '请上传Excel文件(.xls或.xlsx)')
+            messages.error(request, constants.ERROR_INVALID_EXCEL_FORMAT)
             return redirect('lsd:import_surveys')
 
         try:
@@ -252,14 +253,13 @@ def import_surveys(request):
 
             # 验证必要的列是否存在
             headers = [str(cell.value).strip() for cell in sheet[1]]
-            required_columns = ['序号', '姓名', '年龄', '职业', '群体选择', '电话', '是否有过性生活', '一年内是否做过宫颈癌筛查', '本次活动-HPV结果', '本次活动-TCT结果', '活检结果', '备注']
-            missing_columns = [col for col in required_columns if col not in headers]
+            missing_columns = [col for col in constants.REQUIRED_COLUMNS if col not in headers]
             if missing_columns:
-                messages.error(request, f'Excel文件缺少必要的列: {", ".join(missing_columns)}')
+                messages.error(request, constants.ERROR_MISSING_COLUMNS.format(columns=", ".join(missing_columns)))
                 return redirect('lsd:import_surveys')
 
             # 获取列索引
-            column_indices = {col: headers.index(col) + 1 for col in required_columns}
+            column_indices = {col: headers.index(col) + 1 for col in constants.REQUIRED_COLUMNS}
 
             # 导入数据
             success_count = 0
@@ -307,7 +307,7 @@ def import_surveys(request):
                             'age': age,
                             'organization': organization.code,
                             'occupation': row_data['职业'],
-                            'project': '蓝丝带公益行动',
+                            'project': constants.PROJECT_NAME,
                             'groupSelection': row_data['群体选择'],
                             'sexualExperience': sexual_experience,
                             'cervicalCancerScreening': cervical_screening,
@@ -361,12 +361,12 @@ def delete_survey(request, survey_id):
                 if organization_code != survey.organization:
                     return JsonResponse({
                         'code': 403,
-                        'message': '您没有权限删除此问卷'
+                        'message': constants.ERROR_NO_PERMISSION_DELETE
                     }, status=403)
             except UserProfile.DoesNotExist:
                 return JsonResponse({
                     'code': 403,
-                    'message': '您没有权限删除此问卷'
+                    'message': constants.ERROR_NO_PERMISSION_DELETE
                 }, status=403)
         
         # 删除问卷
@@ -374,12 +374,12 @@ def delete_survey(request, survey_id):
         
         return JsonResponse({
             'code': 0,
-            'message': '删除成功'
+            'message': constants.SUCCESS_DELETE
         })
     except LsdSurvey.DoesNotExist:
         return JsonResponse({
             'code': 404,
-            'message': '问卷不存在'
+            'message': constants.ERROR_SURVEY_NOT_FOUND
         }, status=404)
     except Exception as e:
         return JsonResponse({
@@ -397,7 +397,7 @@ def create_survey_page(request):
         organization = None
 
     if not organization:
-        messages.error(request, '用户未关联机构信息，请联系管理员进行关联')
+        messages.error(request, '您未关联机构信息，请联系管理员进行关联')
         return redirect('lsd:index')
 
     return render(request, 'lsd/create_survey.html', {

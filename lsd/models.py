@@ -61,7 +61,7 @@ class LsdSurvey(models.Model):
         regex=r'^1[3-9]\d{9}$',
         message='手机号码格式不正确'
     )
-    phone = models.CharField(validators=[phone_regex], max_length=11)
+    phone = models.CharField(validators=[phone_regex], max_length=15)
     # 单位
     organization = models.CharField(max_length=100)
     # 职业

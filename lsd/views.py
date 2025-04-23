@@ -284,10 +284,10 @@ def import_surveys(request):
 
             # 导入数据
             success_count = 0
-            error_count = 0
             skipped_count = 0
             invalid_phone_count = 0
-            invalid_phone_records = []
+            # 用于存储错误数据
+            error_records = []
 
             for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):  # 从第二行开始（跳过表头）
                 try:
@@ -297,7 +297,7 @@ def import_surveys(request):
                     name = str(row_data['姓名']).strip()
                     phone = str(row_data['电话']).strip()
 
-                    # 检查姓名和电话是否为空
+                    # 检查姓名和电话是否同时为空
                     if not name and not phone:
                         skipped_count += 1
                         logger.info(f'跳过空数据行: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {row_data["电话"]}')
@@ -305,6 +305,8 @@ def import_surveys(request):
 
                     if not name:
                         name = ''
+                    if not phone:
+                        phone = ''
                     
                     # 处理并验证手机号
                     phone = str(phone).replace('.0', '')  # 处理Excel可能将数字加上.0的情况
@@ -312,7 +314,6 @@ def import_surveys(request):
 
                     if not is_valid_phone:
                         invalid_phone_count += 1
-                        invalid_phone_records.append(f"行号 {row_idx}: {row_data['姓名']} ({phone})")
                         logger.info(f'无效手机号: 行号 {row_idx}, 姓名: {row_data["姓名"]}, 电话: {phone}')
 
                     # 转换布尔值
@@ -347,19 +348,22 @@ def import_surveys(request):
 
                     success_count += 1
                 except Exception as e:
-                    error_count += 1
+                    error_records.append(f"行号 {row_idx}: {row_data['姓名']} ({row_data['电话']}), {str(e)}")
                     logger.error(f'导入数据失败: {str(e)}, 行号: {row_idx}, 数据: {row_data}')
 
             # 构建消息
-            message = f'成功导入 {success_count} 条数据，失败 {error_count} 条，跳过 {skipped_count} 条空数据'
+            message = f'成功导入 {success_count} 条数据'
+            if skipped_count > 0:
+                message += f'，跳过 {skipped_count} 条空数据（姓名和电话同时为空）'
             if invalid_phone_count > 0:
                 message += f'，其中 {invalid_phone_count} 条手机号格式不正确'
-                if len(invalid_phone_records) <= 5:  # 如果无效手机号记录不多，直接显示
-                    message += f'：{", ".join(invalid_phone_records)}'
-                else:  # 如果无效手机号记录较多，只显示前5条
-                    message += f'：{", ".join(invalid_phone_records[:5])}等'
+            
+            if len(error_records) <= 0:
+                messages.success(request, message)
+            else:
+                message += f'，并发现 {len(error_records)} 条错误数据: \n\n' + "\n\n".join(error_records)
+                messages.error(request, message)
 
-            messages.success(request, message)
             return redirect('lsd:import_surveys')
 
         except Exception as e:
